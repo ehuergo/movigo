@@ -32,11 +32,12 @@ func main(){
     sort.Ints(keys)
 
     //for _, group := range groups{
-    for _, k := range keys{
-        group := groups[k]
-        log.Println(group.Number, len(group.SD), len(group.HD))
-    }
+    //for _, k := range keys{
+    //    group := groups[k]
+    //    log.Println(group.Number, len(group.SD), len(group.HD))
+    //}
     //log.Println("GROUPS", groups)
     //channels := scanner.GetChannelList(nil) //packages)
     //DumpIPTVSimple(channels, "172.16.10.9", 9998)
+    DumpGroupsAsIPTVSimple(groups, "172.16.10.9", 9998)
 }
