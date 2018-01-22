@@ -6,6 +6,8 @@ import (
     "io"
     "os"
     "log"
+//    "strings"
+    "hash/crc32"
 )
 
 const (
@@ -86,6 +88,9 @@ func NewDVBSTPStreamReader(path string) *DVBSTPStreamReader{
 }
 
 func (r *DVBSTPStreamReader) ReadFiles(howmany int) [][]byte{
+
+    log.Printf("Requested to read %d files from %s", howmany, r.path)
+
     files := make([][]byte, 0)
 
     f, err := os.Open(r.path); if err != nil{
@@ -93,19 +98,23 @@ func (r *DVBSTPStreamReader) ReadFiles(howmany int) [][]byte{
     }
     defer f.Close()
 
+    reset := false
+
     for{
         msgs := make([]*DVBSTP, 0)
         nextlen := uint32(DVBSTP_DGRAM_LEN)
+        nextcrc := uint32(0)
+        nextsection := uint16(0)
 
         for{
-            //log.Println("Will read", nextlen)
             b := make([]byte, nextlen)
             n, err := io.ReadFull(f, b); if err != nil{
                 log.Fatal(n, err)
             }
+//            log.Println("Requested", nextlen, "read", n, "OK?", uint32(n) == nextlen)
 
             msg := NewDVBSTPMessage(b)
-            //log.Println("SEGMENT PAYLOAD", string(msg.Payload))
+//            log.Printf("%+v\n", msg)
             //log.Printf("%+v\n%s\n", msg, string(msg.Payload))
 
             if msg.SectionNumber == msg.LastSectionNumber - 1{
@@ -116,14 +125,40 @@ func (r *DVBSTPStreamReader) ReadFiles(howmany int) [][]byte{
             }
 
             if len(msgs) == 0 && msg.SectionNumber != 0{ //Looking for first section if msg slice is still empty
+//                log.Printf("Skip this section %d/%d\n", msg.SectionNumber, msg.LastSectionNumber)
                 continue
             }
+
+            if len(msgs) == 0{
+                log.Printf("File starts. Size %d bytes. Sections %d.", msg.SegmentSize, msg.LastSectionNumber + 1)
+            }
+
+            if msg.SectionNumber != nextsection{
+                log.Printf("Wrong SECTION Wrong SECTION %d should be %d\n", msg.SectionNumber, nextsection)
+                reset = true
+                nextsection = 0
+                break
+            }
+
+            nextsection++
+
+//            log.Println("SEGMENT PAYLOAD", strings.Replace(string(msg.Payload), "\n", "", -1))
 
             msgs = append(msgs, msg)
 
             if msg.SectionNumber == msg.LastSectionNumber{
+                log.Printf("This was the last section (%d). CRC should be 0x%x", msg.SectionNumber, msg.CRC)
+                nextcrc = msg.CRC
+                nextsection = 0
                 break
             }
+        }
+
+        if reset{
+            log.Println("RESET detected. Start over.")
+            files = make([][]byte, 0)
+            reset = false
+            continue
         }
 
         file := make([]byte, 0)
@@ -131,6 +166,10 @@ func (r *DVBSTPStreamReader) ReadFiles(howmany int) [][]byte{
             //log.Println("FILE", string(file))
             file = append(file, msg.Payload...)
         }
+
+        filecrc := crc32.ChecksumIEEE(file)
+
+        log.Printf("Finished read file. Read %d bytes. CRC 0x%x is OK: %t", len(file), filecrc, filecrc == nextcrc)
 
         files = append(files, file)
         if len(files) == howmany{
