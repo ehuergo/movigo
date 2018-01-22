@@ -4,18 +4,6 @@ import (
     "fmt"
 )
 
-//type PlaylistGenerator interface{
-//    Dump() []byte
-//}
-//
-//type IPTVSimplePlaylist struct{
-//}
-//
-//func (p *IPTVSimplePlaylist) Dump() []byte{
-//
-//    return nil
-//}
-
 func DumpIPTVSimple(channels []*LogicalChannel, xyaddr string, xyport int) []byte{
 
     fmt.Println("#EXTM3U")
@@ -27,7 +15,6 @@ func DumpIPTVSimple(channels []*LogicalChannel, xyaddr string, xyport int) []byt
             c.FromPackage,
             c.Name)
 
-        //fmt.Println(c.GetUDPXYString(address, port))
         if xyaddr != ""{
             fmt.Println(c.Url.AsUDPXY(xyaddr, xyport))
         }else{
