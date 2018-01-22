@@ -1,7 +1,7 @@
 package main
 
 import (
-//    "log"
+    "log"
     "fmt"
     "strings"
 )
@@ -53,6 +53,7 @@ type SI struct{
 
 type SingleService struct{
     ServiceLocation     []IPMulticastAddress    `xml:"ServiceLocation>IPMulticastAddress"`
+    ServiceLocationHTTP []string                `xml:"ServiceLocation>HTTPURL"`
     TextualIdentifier   TextualIdentifier       `xml:"TextualIdentifier"`
     SI                  SI                      `xml:"SI"`
 }
@@ -124,15 +125,30 @@ type LogicalChannel struct{
 }
 
 func NewLogicalChannel(packagename string, pkgservice *Service, service *SingleService) *LogicalChannel{
+
+    var url StreamURL
+
+    if len(service.ServiceLocation) > 0{
+        url = &MulticastStreamURL{
+            Address:        service.ServiceLocation[0].Address,
+            Port:           service.ServiceLocation[0].Port,
+        }
+    }else if len(service.ServiceLocationHTTP) > 0{
+        url = &HTTPStreamURL{
+            Url:            service.ServiceLocationHTTP[0],
+        }
+    }
+
+    if url == nil{
+        log.Println("No service location for", service.SI.Name, pkgservice.LogicalChannelNumber)
+    }
+
     return &LogicalChannel{
         Name:           service.SI.Name,
         Number:         pkgservice.LogicalChannelNumber,
         HD:             service.SI.Name[len(service.SI.Name)-2:] == "HD",
         FromPackage:    packagename,
-        Url:            StreamURL{
-            Address:        service.ServiceLocation[0].Address,
-            Port:           service.ServiceLocation[0].Port,
-        },
+        Url:            url,
         Description:    service.SI.Description,
         Genre:          service.SI.Genre,
     }
@@ -154,18 +170,39 @@ func (c *LogicalChannel) GetUDPXYString(ip string, port int) (uri string){
 
 /* StreamURL */
 
-type StreamURL struct{
+type StreamURL interface{
+    AsRTP() string
+    AsUDP() string
+    AsUDPXY(xyaddr string, xyport int) string
+}
+
+type HTTPStreamURL struct{
+    Url     string
+}
+func (url *HTTPStreamURL) AsRTP() string{
+    return ""
+}
+func (url *HTTPStreamURL) AsUDP() string{
+    return ""
+}
+func (url *HTTPStreamURL) AsUDPXY(xyaddr string, xyport int) string{
+    return url.Url
+}
+
+type MulticastStreamURL struct{
     Address     string
     Port        int
 }
 
-func (url *StreamURL) AsRTP() string{
+func (url *MulticastStreamURL) AsRTP() string{
     return fmt.Sprintf("rtp://%s:%d", url.Address, url.Port)
 }
-func (url *StreamURL) AsUDP() string{
+func (url *MulticastStreamURL) AsUDP() string{
     return fmt.Sprintf("udp://%s:%d", url.Address, url.Port)
 }
-func (url *StreamURL) AsUDPXY(xyaddr string, xyport int) string{
+func (url *MulticastStreamURL) AsUDPXY(xyaddr string, xyport int) string{
     return fmt.Sprintf("http://%s:%d/rtp/%s:%d", xyaddr, xyport, url.Address, url.Port)
 }
+
+
 
