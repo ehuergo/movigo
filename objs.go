@@ -144,7 +144,7 @@ func NewLogicalChannel(packagename string, pkgservice *Service, service *SingleS
     }
 
     return &LogicalChannel{
-        Name:           service.SI.Name,
+        Name:           strings.Replace(service.SI.Name, "\n", "", -1),
         Number:         pkgservice.LogicalChannelNumber,
         HD:             service.SI.Name[len(service.SI.Name)-2:] == "HD",
         FromPackage:    packagename,
@@ -158,14 +158,6 @@ func (c *LogicalChannel) GetLogoPath() (path string){
     path = strings.Replace(c.Name, " ", "", -1)
     path = strings.ToLower(path)
     return
-}
-
-func (c *LogicalChannel) GetRTPString() (uri string){
-    return fmt.Sprintf("rtp://%s:%d", c.Address, c.Port)
-}
-
-func (c *LogicalChannel) GetUDPXYString(ip string, port int) (uri string){
-    return fmt.Sprintf("http://%s:%d/rtp/%s:%d", ip, port, c.Address, c.Port)
 }
 
 /* StreamURL */
