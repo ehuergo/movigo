@@ -166,6 +166,7 @@ func (scanner *MovistarScanner) GetChannelGroups(packages map[string]string) map
                 SD:         make([]*LogicalChannel, 0),
                 HD:         make([]*LogicalChannel, 0),
             }
+            groups[channel.Number] = group
         }
         if channel.HD{
             group.HD = append(group.HD, channel)
