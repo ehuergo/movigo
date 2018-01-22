@@ -93,7 +93,7 @@ func (s *MovistarScanner) Scan(path string) bool{
         log.Fatal("No service provider found for ", s.DomainName)
     }
 
-    r := NewDVBSTPStreamReader("all2.raw")
+    r := NewDVBSTPStreamReader("samples/all2.raw")
     files := r.ReadFiles(3)
 
     for _, file := range files{
@@ -200,8 +200,9 @@ func (scanner *MovistarScanner) GetChannelList(packages map[string]string) []*Lo
                 continue
             }
 
+            //log.Println(service, si)
             channel := NewLogicalChannel(friendlyname, service, si)
-            log.Println(channel)
+            //log.Println(channel)
             channels = append(channels, channel)
         }
     }
