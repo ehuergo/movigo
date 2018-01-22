@@ -16,8 +16,7 @@ import (
 //    return nil
 //}
 
-func DumpIPTVSimple(channels []*LogicalChannel) []byte{
-    //channels := sd.GetPackageChannels(packages)
+func DumpIPTVSimple(channels []*LogicalChannel, xyaddr string, xyport int) []byte{
 
     fmt.Println("#EXTM3U")
     for _, c := range channels{
@@ -29,7 +28,11 @@ func DumpIPTVSimple(channels []*LogicalChannel) []byte{
             c.Name)
 
         //fmt.Println(c.GetUDPXYString(address, port))
-        fmt.Println(c.Url.AsRTP())
+        if xyaddr != ""{
+            fmt.Println(c.Url.AsUDPXY(xyaddr, xyport))
+        }else{
+            fmt.Println(c.Url.AsRTP())
+        }
     }
 
     return nil
