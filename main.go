@@ -4,21 +4,10 @@ import (
     "log"
 //    "encoding/json"
     "os"
+    "sort"
 )
 
 func main(){
-    //r := NewDVBSTPStreamReader("p1.raw")
-    //files := r.ReadFiles(1)
-
-    //spd_raw := files[0]
-
-    //log.Println(string(spd_raw))
-
-    //sd := &ServiceDiscovery{}
-    //xml.Unmarshal(spd_raw, sd)
-    //spd := sd.ServiceProviderDiscovery
-
-    //log.Printf("%+v\n",spd)
 
     scanner := NewMovistarScanner(MADRID)
     ok := scanner.Scan(os.Args[1]); if !ok{
@@ -34,16 +23,20 @@ func main(){
 
     //scanner.ListPackages()
 
-    channels := scanner.GetChannelList(nil) //packages)
-    DumpIPTVSimple(channels)
-}
+    groups := scanner.GetChannelGroups(nil)
 
-func main1(){
+    var keys []int
+    for k := range groups{
+        keys = append(keys, k)
+    }
+    sort.Ints(keys)
 
-        //j, err := json.MarshalIndent(pd, "", "  "); if err != nil{
-
-    //sd.ListPackages()
-
-    //sd.GenerateIPTVSimpleList(packages, "172.16.10.9", 9998)
-
+    //for _, group := range groups{
+    for _, k := range keys{
+        group := groups[k]
+        log.Println(group.Number, len(group.SD), len(group.HD))
+    }
+    //log.Println("GROUPS", groups)
+    //channels := scanner.GetChannelList(nil) //packages)
+    //DumpIPTVSimple(channels, "172.16.10.9", 9998)
 }
