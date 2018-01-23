@@ -70,7 +70,7 @@ func (l *Area) String() string{
     return "Unknown"
 }
 
-type MovistarScanner struct{
+type Movi struct{
     area        Area
     DomainName  string
     spd         *ServiceProviderDiscovery
@@ -79,18 +79,18 @@ type MovistarScanner struct{
     pd          *PackageDiscovery
 }
 
-func NewMovistarScanner(area Area) *MovistarScanner{
-    s := &MovistarScanner{}
+func NewMovi(area Area) *Movi{
+    movi := &Movi{}
 
-    s.area = area
-    s.DomainName = fmt.Sprintf("DEM_%d.imagenio.es", area)
+    movi.area = area
+    movi.DomainName = fmt.Sprintf("DEM_%d.imagenio.es", area)
 
-    return s
+    return movi
 }
 
-func (s *MovistarScanner) Scan(path string) bool{
-    s.ScanServiceProvider(path); if s.sp == nil{
-        log.Fatal("No service provider found for ", s.DomainName)
+func (movi *Movi) Scan(path string) bool{
+    movi.ScanServiceProvider(path); if movi.sp == nil{
+        log.Fatal("No service provider found for ", movi.DomainName)
     }
 
     r := NewDVBSTPReader("samples/all2.raw")
@@ -102,23 +102,23 @@ func (s *MovistarScanner) Scan(path string) bool{
         xml.Unmarshal(file, disco)
         //log.Printf("%+v", disco)
         if disco.BroadcastDiscovery.Version != 0{
-            s.bd = &disco.BroadcastDiscovery
+            movi.bd = &disco.BroadcastDiscovery
             log.Println("Found BroadcastDiscovery with", len(disco.BroadcastDiscovery.ServiceList), "services")
         }else if disco.PackageDiscovery.Version != 0{
-            s.pd = &disco.PackageDiscovery
+            movi.pd = &disco.PackageDiscovery
             log.Println("Found PackageDiscovery with", len(disco.PackageDiscovery.PackageList), "packages")
         }
     }
 
-    if s.bd == nil && s.pd == nil{
+    if movi.bd == nil && movi.pd == nil{
         return false
     }
 
-    log.Printf("%+v\n",s)
+    log.Printf("%+v\n",movi)
     return true
 }
 
-func (s *MovistarScanner) ScanServiceProvider(path string){
+func (movi *Movi) ScanServiceProvider(path string){
     r := NewDVBSTPReader(path)
     files := r.ReadFiles(1)
 
@@ -128,23 +128,23 @@ func (s *MovistarScanner) ScanServiceProvider(path string){
 
     sd := &ServiceDiscovery{}
     xml.Unmarshal(spd_raw, sd)
-    s.spd = &sd.ServiceProviderDiscovery
+    movi.spd = &sd.ServiceProviderDiscovery
 
-    //log.Printf("%+v\n",s.spd)
+    //log.Printf("%+v\n",movi.spd)
 
-    for _, provider := range s.spd.ServiceProviders{
+    for _, provider := range movi.spd.ServiceProviders{
         //log.Printf("%+v\n", provider)
-        if provider.DomainName == s.DomainName{
-            s.sp = provider
+        if provider.DomainName == movi.DomainName{
+            movi.sp = provider
         }
     }
 }
 
-func (s *MovistarScanner) ListPackages(){
-    for _, x := range s.pd.PackageList{
+func (movi *Movi) ListPackages(){
+    for _, x := range movi.pd.PackageList{
         log.Println("\n->", x.PackageName, len(x.Services))
         for _, ser := range x.Services{
-            si := s.bd.GetServiceByTextualID(ser.TextualID.ServiceName); if si == nil{
+            si := movi.bd.GetServiceByTextualID(ser.TextualID.ServiceName); if si == nil{
                 log.Println("Service spec not found for TextualID", ser.TextualID.ServiceName)
             }else{
                 log.Println(ser.LogicalChannelNumber, ser.TextualID.ServiceName, si.SI.Name)
@@ -153,11 +153,11 @@ func (s *MovistarScanner) ListPackages(){
     }
 }
 
-func (scanner *MovistarScanner) GetChannelGroups(packages map[string]string) map[int]*ChannelGroup{
+func (movi *Movi) GetChannelGroups(packages map[string]string) map[int]*ChannelGroup{
 
     groups := make(map[int]*ChannelGroup)
 
-    channels := scanner.GetChannelList(packages)
+    channels := movi.GetChannelList(packages)
 
     for _, channel := range channels{
         group, ok := groups[channel.Number]; if !ok{
@@ -179,11 +179,11 @@ func (scanner *MovistarScanner) GetChannelGroups(packages map[string]string) map
 
 }
 
-func (scanner *MovistarScanner) GetChannelList(packages map[string]string) []*LogicalChannel{
+func (movi *Movi) GetChannelList(packages map[string]string) []*LogicalChannel{
 
     channels := make([]*LogicalChannel, 0)
 
-    for _, x := range scanner.pd.PackageList{
+    for _, x := range movi.pd.PackageList{
 
         friendlyname := x.PackageName
         var ok bool
@@ -196,7 +196,7 @@ func (scanner *MovistarScanner) GetChannelList(packages map[string]string) []*Lo
 
         for _, service := range x.Services{
 
-            si := scanner.bd.GetServiceByTextualID(service.TextualID.ServiceName); if si == nil{
+            si := movi.bd.GetServiceByTextualID(service.TextualID.ServiceName); if si == nil{
                 log.Println("No channel found for service", service)
                 continue
             }
