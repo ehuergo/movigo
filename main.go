@@ -68,6 +68,10 @@ func main(){
     }    
     //else file
 
+    if fromprefix == ""{
+        log.Fatal("No input specified")
+    }
+
     movi := NewMovi(opts.Area)
     ok := movi.Scan(fromprefix); if !ok{
         log.Fatal("Something went wrong scanning %s", opts.Area)
