@@ -101,8 +101,6 @@ func main(){
 
     defer writer.(*os.File).Close()
 
-    log.Println("ACC", streamaccess)
-
     groups := movi.GetChannelGroups(packages)
 
     var keys []int
@@ -111,15 +109,8 @@ func main(){
     }
     sort.Ints(keys)
 
-    //for _, group := range groups{
-    //for _, k := range keys{
-    //    group := groups[k]
-    //    log.Println(group.Number, len(group.SD), len(group.HD))
-    //}
-    //log.Println("GROUPS", groups)
     //channels := movi.GetChannelList(nil) //packages)
     //DumpIPTVSimple(channels, "172.16.10.9", 9998)
-    //DumpGroupsAsIPTVSimple(groups, "172.16.10.9", 9998)
     data := DumpGroupsAsIPTVSimple(groups, streamprefix)
     writer.Write(data)
 }
