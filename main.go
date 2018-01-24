@@ -68,9 +68,9 @@ func main(){
     }    
     //else file
 
-    movi := NewMovi(MADRID)
+    movi := NewMovi(opts.Area)
     ok := movi.Scan(fromprefix); if !ok{
-        log.Fatal("Something went wrong scanning %s", MADRID)
+        log.Fatal("Something went wrong scanning %s", opts.Area)
     }
 
     if opts.ListPackages{
