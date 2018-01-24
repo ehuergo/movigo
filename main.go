@@ -5,6 +5,8 @@ import (
     "log"
     "sort"
     //"flag"
+    "io"
+    "os"
     "net/url"
     "github.com/alexflint/go-arg"
 )
@@ -30,10 +32,21 @@ var opts struct{
     PlaylistFmt     string  `arg:"-f" help:"Only m3u is supported"`
     StreamAccess    string  `arg:"-x" help:"udpxy://IP:PORT, udp:// or rtp://"`
     Area            Area    `arg:"-a" help:"Area code"`
+    ListPackages    bool    `arg:"-l" help:"List available packages and exit"`
 }
 
 func main(){
 
+    log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+    var err error
+
+    packages := map[string]string{
+        "UTX32": "TDT",
+        "UTX64": "Extra",
+    }
+
+    opts.SaveTo = "stdout"
     opts.Area = MADRID
 
     arg.MustParse(&opts)
@@ -42,36 +55,50 @@ func main(){
     readfrom, err := url.Parse(opts.ReadFrom); if err != nil{
         log.Fatal(err)
     }
-    saveto, err := url.Parse(opts.SaveTo); if err != nil{
-        log.Fatal(err)
-    }
     streamaccess, err := url.Parse(opts.StreamAccess); if err != nil{
         log.Fatal(err)
     }
 
-    fromprefix := ""    //file
+    fromprefix := opts.ReadFrom
 
-    if readfrom.Scheme == ""{
-        fromprefix = ""
-    }else if readfrom.Scheme == "udp"{
+    if readfrom.Scheme == "udp"{
         fromprefix = "udp://"
     }else if readfrom.Scheme == "udpxy"{
         fromprefix = fmt.Sprintf("http://%s:%d/udp/", readfrom.Host, readfrom.Port)
-    }
+    }    
+    //else file
 
     movi := NewMovi(MADRID)
     ok := movi.Scan(fromprefix); if !ok{
         log.Fatal("Something went wrong scanning %s", MADRID)
     }
 
-    packages := map[string]string{
-        "UTX32": "TDT",
-        "UTX64": "Extra",
+    if opts.ListPackages{
+        movi.ListPackages()
+        return
     }
 
-    //movi.ListPackages()
+    streamprefix := opts.StreamAccess
 
-    groups := movi.GetChannelGroups(nil)
+    if streamaccess.Scheme == "udpxy"{
+        streamprefix = fmt.Sprintf("http://%s:%d/udp/", streamaccess.Host, streamaccess.Port)
+    }
+
+    var writer io.Writer
+
+    if opts.SaveTo == "stdout"{
+        writer = os.Stdout
+    }else{ 
+        writer, err = os.OpenFile(opts.SaveTo, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
+            log.Fatal(err)
+        }
+    }
+
+    defer writer.(*os.File).Close()
+
+    log.Println("ACC", streamaccess)
+
+    groups := movi.GetChannelGroups(packages)
 
     var keys []int
     for k := range groups{
@@ -87,5 +114,6 @@ func main(){
     //log.Println("GROUPS", groups)
     //channels := movi.GetChannelList(nil) //packages)
     //DumpIPTVSimple(channels, "172.16.10.9", 9998)
-    DumpGroupsAsIPTVSimple(groups, "172.16.10.9", 9998)
+    //DumpGroupsAsIPTVSimple(groups, "172.16.10.9", 9998)
+    DumpGroupsAsIPTVSimple(groups, streamprefix)
 }

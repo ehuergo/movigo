@@ -166,10 +166,14 @@ type StreamURL interface{
     AsRTP() string
     AsUDP() string
     AsUDPXY(xyaddr string, xyport int) string
+    Raw() string
 }
 
 type HTTPStreamURL struct{
     Url     string
+}
+func (url *HTTPStreamURL) Raw() string{
+    return url.Url
 }
 func (url *HTTPStreamURL) AsRTP() string{
     return ""
@@ -184,6 +188,10 @@ func (url *HTTPStreamURL) AsUDPXY(xyaddr string, xyport int) string{
 type MulticastStreamURL struct{
     Address     string
     Port        int
+}
+
+func (url *MulticastStreamURL) Raw() string{
+    return fmt.Sprintf("%s:%d", url.Address, url.Port)
 }
 
 func (url *MulticastStreamURL) AsRTP() string{

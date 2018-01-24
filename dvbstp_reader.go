@@ -131,6 +131,7 @@ func getHttpReader(uri string) io.Reader{
 }
 
 func getFilesystemReader(uri string) io.Reader{
+    log.Println(uri)
     f, err := os.Open(uri); if err != nil{
         log.Fatal(err)
     }
