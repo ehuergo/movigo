@@ -83,6 +83,7 @@ func main(){
     if streamaccess.Scheme == "udpxy"{
         streamprefix = fmt.Sprintf("http://%s:%d/udp/", streamaccess.Host, streamaccess.Port)
     }
+    //else keep untouched
 
     var writer io.Writer
 
@@ -115,5 +116,6 @@ func main(){
     //channels := movi.GetChannelList(nil) //packages)
     //DumpIPTVSimple(channels, "172.16.10.9", 9998)
     //DumpGroupsAsIPTVSimple(groups, "172.16.10.9", 9998)
-    DumpGroupsAsIPTVSimple(groups, streamprefix)
+    data := DumpGroupsAsIPTVSimple(groups, streamprefix)
+    writer.Write(data)
 }

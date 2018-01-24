@@ -8,6 +8,8 @@ import (
 
 func DumpGroupsAsIPTVSimple(groups map[int]*ChannelGroup, prefix string) []byte{
     var keys []int
+    data := []byte("#EXTM3U\n")
+
     for k := range groups{
         keys = append(keys, k)
     }
@@ -16,35 +18,37 @@ func DumpGroupsAsIPTVSimple(groups map[int]*ChannelGroup, prefix string) []byte{
     for _, k := range keys{
         group := groups[k]
         if len(group.HD) > 0{
-            dumpIPTVSimpleChannel(group.HD[0], prefix)
+            data = append(data, dumpIPTVSimpleChannel(group.HD[0], prefix)...)
         }else if len(group.SD) > 0{
-            dumpIPTVSimpleChannel(group.SD[0], prefix)
+            data = append(data, dumpIPTVSimpleChannel(group.SD[0], prefix)...)
         }else{
             log.Println("WARNING: No SD or HD channels in group", group)
         }
     }
 
-    return nil
+    return data
 }
 
 func dumpIPTVSimpleChannel(c *LogicalChannel, prefix string) []byte{
-    fmt.Printf("#EXTINF:-1 tvg-logo=\"%s\" tvg-chno=\"%d\" group-title=\"%s\", %s\n",
+
+    extinf := fmt.Sprintf("#EXTINF:-1 tvg-logo=\"%s\" tvg-chno=\"%d\" group-title=\"%s\", %s\n",
         c.GetLogoPath(),
         c.Number,
         c.FromPackage,
         c.Name)
 
-    fmt.Println(prefix + c.Url.Raw())
+    url := fmt.Sprintf("%s%s\n", prefix, c.Url.Raw())
 
-    return nil
+    return append([]byte(extinf), []byte(url)...)
 }
 
 func DumpIPTVSimple(channels []*LogicalChannel, prefix string) []byte{
 
-    fmt.Println("#EXTM3U")
+    data := []byte("#EXTM3U\n")
+
     for _, c := range channels{
-        dumpIPTVSimpleChannel(c, prefix)
+        data = append(data, dumpIPTVSimpleChannel(c, prefix)...)
     }
 
-    return nil
+    return data
 }
