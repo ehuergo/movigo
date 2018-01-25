@@ -40,9 +40,10 @@ func (reader DVBSTPMessageReader) NextMessage(length int) *DVBSTP{
     dgram := reader.NextDatagram(length)
     msg := NewDVBSTPMessage(dgram)
 
+    //log.Printf("%d/%d (%d)", msg.SectionNumber, msg.LastSectionNumber, msg.SegmentSize)
+
     return msg
 }
-
 
 type DVBSTPFileReader struct{
     msgreader       *DVBSTPMessageReader

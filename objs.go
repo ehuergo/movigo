@@ -85,7 +85,49 @@ type ServiceDiscovery struct{
     BroadcastDiscovery  BroadcastDiscovery
     PackageDiscovery    PackageDiscovery
     ServiceProviderDiscovery ServiceProviderDiscovery
+    BCGDiscovery        BCGDiscovery
 }
+
+/* BCGDiscovery */
+
+type BCGDiscovery struct{
+    DomainName          string              `xml:"DomainName,attr"`
+    Version             int                 `xml:"Version,attr"`
+    BCGList             []*BCG              `xml:"BCG"`
+}
+
+type BCG struct{
+    Id                  string              `xml:"Id,attr"`
+    Name                string              `xml:"Name"`
+    TransportMode       TransportMode       `xml:"TransportMode"`
+}
+
+type TransportMode struct{
+    DVBSTP              []DVBSTPTransport   `xml:"DVBSTP"`
+    DVBBINSTP           []DVBBINSTP         `xml:"DVBBINSTP"`
+}
+
+type DVBSTPTransport struct{
+    Address             string              `xml:"Address,attr"`
+    Port                int                 `xml:"Port,attr"`
+}
+
+type DVBBINSTP struct{
+    DVBSTPTransport
+    Source              string              `xml:"Source,attr"`
+    PayloadId           PayloadId           `xml:"PayloadId"`
+}
+
+type PayloadId struct{
+    Id                  string              `xml:"Id,attr"`
+    Segments            []PayloadSegment    `xml:"Segment"`
+}
+
+type PayloadSegment struct{
+    Id                  string              `xml:"ID,attr"`
+    Version             int                 `xml:"Version,attr"`
+}
+
 
 /* Package Discovery */
 

@@ -18,6 +18,7 @@ type Movi struct{
     sp          *ServiceProvider
     bd          *BroadcastDiscovery
     pd          *PackageDiscovery
+    bcg         *BCGDiscovery
 }
 
 func NewMovi(area Area) *Movi{
@@ -48,7 +49,9 @@ func(movi *Movi) Scan(prefix string) bool{
     for _, file := range files{
         //log.Println(string(file))
         disco := &ServiceDiscovery{}
-        xml.Unmarshal(file, disco)
+        err := xml.Unmarshal(file, disco); if err != nil{
+            log.Println(err)
+        }
         //log.Printf("%+v", disco)
         if disco.BroadcastDiscovery.Version != 0{
             movi.bd = &disco.BroadcastDiscovery
@@ -56,6 +59,11 @@ func(movi *Movi) Scan(prefix string) bool{
         }else if disco.PackageDiscovery.Version != 0{
             movi.pd = &disco.PackageDiscovery
             log.Println("Found PackageDiscovery with", len(disco.PackageDiscovery.PackageList), "packages")
+        }else if disco.BCGDiscovery.Version != 0{
+            movi.bcg = &disco.BCGDiscovery
+            log.Println("Found BCGDiscovery with", len(disco.BCGDiscovery.BCGList), "providers")
+            log.Printf("%+v\n", movi.bcg.BCGList[0])
+            log.Printf("%+v\n", movi.bcg.BCGList[1])
         }
     }
 
