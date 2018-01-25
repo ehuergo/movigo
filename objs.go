@@ -4,6 +4,7 @@ import (
     "log"
     "fmt"
     "strings"
+    "time"
 )
 
 /* SPD SDS */
@@ -88,12 +89,67 @@ type ServiceDiscovery struct{
     BCGDiscovery        BCGDiscovery
 }
 
+/* TV-Anytime MiView TV Present / Following  */
+
+type TVAMain struct{
+    ProgramDescription      ProgramDescription  `xml:"ProgramDescription"`
+}
+
+type ProgramDescription struct{
+    ProgramLocationTable    ProgramLocationTable    `xml:"ProgramLocationTable"`
+}
+
+type ProgramLocationTable struct{
+    Schedule        Schedule        `xml:"Schedule"`
+}
+
+type Schedule struct{
+    ServiceIDRef    string          `xml:"serviceIDRef,attr"`
+    Version         int             `xml:"Version"`
+    ScheduleEventList   []ScheduleEvent `xml:"ScheduleEvent"`
+}
+
+type ScheduleEvent struct{
+    Program         Program         `xml:"Program"`
+}
+
+type Program struct{
+    Crid            string `xml:"crid,attr"`
+    ProgramInfo     int    `xml:"ProgramInfo,attr"`
+    Title           string `xml:"InstanceDescription>Title"`
+    Genre           string `xml:"InstanceDescription>Genre>Name"`
+    ParentalRating  string `xml:"InstanceDescription>ParentalGuidance>ParentalRating>Name"` 
+    PublishedStartTime time.Time `xml:"PublishedStartTime"`
+}
+
 /* BCGDiscovery */
 
 type BCGDiscovery struct{
     DomainName          string              `xml:"DomainName,attr"`
     Version             int                 `xml:"Version,attr"`
-    BCGList             []*BCG              `xml:"BCG"`
+    BCGList             []BCG               `xml:"BCG"`
+}
+
+func (d *BCGDiscovery) GetNowNext() *BCG{
+    for _, bcg := range d.BCGList{
+        if bcg.Id == "p_f"{
+            return &bcg
+        }
+    }
+
+    return nil
+}
+
+func (d *BCGDiscovery) GetNowNextAddress() string{
+    nn := d.GetNowNext()
+    if len(nn.TransportMode.DVBSTP) > 0{
+        return fmt.Sprintf("%s:%d", nn.TransportMode.DVBSTP[0].Address, nn.TransportMode.DVBSTP[0].Port)
+    }
+
+    return ""
+}
+
+func (d *BCGDiscovery) GetList(){
 }
 
 type BCG struct{

@@ -43,7 +43,22 @@ func(movi *Movi) Scan(prefix string) bool{
     offering := movi.sp.Offering[0]
     nexturi := fmt.Sprintf("%s%s", prefix, offering)
 
-    r := NewDVBSTPReader(nexturi)
+    if ok := movi.FindDiscoveryFiles(nexturi); !ok{
+        log.Fatal("Some discovery files are missing", nexturi)
+    }
+
+    // TV-Anytime
+    //nownexturi := movi.bcg.GetNowNextAddress()
+    //r := NewDVBSTPReader(prefix + nownexturi)
+    //files := r.ReadFiles(10)
+    //log.Println(files)
+
+    log.Printf("%+v\n",movi)
+    return true
+}
+
+func (movi *Movi) FindDiscoveryFiles(path string) bool{
+    r := NewDVBSTPReader(path)
     files := r.ReadFiles(3)
 
     for _, file := range files{
@@ -62,16 +77,15 @@ func(movi *Movi) Scan(prefix string) bool{
         }else if disco.BCGDiscovery.Version != 0{
             movi.bcg = &disco.BCGDiscovery
             log.Println("Found BCGDiscovery with", len(disco.BCGDiscovery.BCGList), "providers")
-            log.Printf("%+v\n", movi.bcg.BCGList[0])
-            log.Printf("%+v\n", movi.bcg.BCGList[1])
+            //log.Printf("%+v\n", movi.bcg.BCGList[0])
+            //log.Printf("%+v\n", movi.bcg.BCGList[1])
         }
     }
 
-    if movi.bd == nil && movi.pd == nil{
+    if movi.bd == nil || movi.pd == nil || movi.bcg == nil{
         return false
     }
 
-    log.Printf("%+v\n",movi)
     return true
 }
 
