@@ -8,6 +8,7 @@ import (
     "errors"
     "net/http"
     "hash/crc32"
+    "github.com/cheggaaa/pb"
 )
 
 const (
@@ -70,6 +71,8 @@ func (reader DVBSTPFileReader) NextFile() ([]byte, error){
     nextlen := DVBSTP_DGRAM_LEN
     var prevmsg *DVBSTP
 
+    var bar *pb.ProgressBar
+
     for{
         msg := reader.msgreader.NextMessage(nextlen)
 
@@ -92,13 +95,18 @@ func (reader DVBSTPFileReader) NextFile() ([]byte, error){
             }
         }else{
             log.Printf("New file starts. Size is %d bytes. Has %d sections.\n", msg.SegmentSize, msg.LastSectionNumber + 1)
+            bar = pb.New(msg.SegmentSize)
+            bar.Start()
         }
 
         msgs = append(msgs, msg)
 
+        bar.Write(msg.Payload)
+
         prevmsg = msg
 
         if msg.SectionNumber == msg.LastSectionNumber{
+            bar.Finish()
             break
         }
     }
