@@ -22,8 +22,8 @@ const (
     CASTILLA_LA_MANCHA      Area = 38
 )
 
-func (l *Area) String() string{
-    switch *l{
+func (l Area) String() string{
+    switch l{
         case CATALUNYA:
             return "Catalunya"
         case CASTILLA_Y_LEON:

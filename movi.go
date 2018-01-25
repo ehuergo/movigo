@@ -7,6 +7,10 @@ import (
     "sort"
 )
 
+const (
+    EntryPointURI = "239.0.2.129:3937"
+)
+
 type Movi struct{
     area        Area
     DomainName  string
@@ -25,12 +29,20 @@ func NewMovi(area Area) *Movi{
     return movi
 }
 
-func (movi *Movi) Scan(path string) bool{
-    movi.ScanServiceProvider(path); if movi.sp == nil{
+func(movi *Movi) Scan(prefix string) bool{
+
+    entrypoint := fmt.Sprintf("%s%s", prefix, EntryPointURI)
+
+    movi.FindAreaServiceProvider(entrypoint); if movi.sp == nil{
         log.Fatal("No service provider found for ", movi.DomainName)
     }
 
-    r := NewDVBSTPReader("samples/all2.raw")
+    log.Printf("Found %d SP offerings for area %s: %s\n", len(movi.sp.Offering), movi.area.String(), movi.sp.Offering)
+
+    offering := movi.sp.Offering[0]
+    nexturi := fmt.Sprintf("%s%s", prefix, offering)
+
+    r := NewDVBSTPReader(nexturi)
     files := r.ReadFiles(3)
 
     for _, file := range files{
@@ -55,7 +67,7 @@ func (movi *Movi) Scan(path string) bool{
     return true
 }
 
-func (movi *Movi) ScanServiceProvider(path string){
+func (movi *Movi) FindAreaServiceProvider(path string){
     r := NewDVBSTPReader(path)
     files := r.ReadFiles(1)
 
