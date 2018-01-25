@@ -13,6 +13,10 @@ type ServiceProviderOffering struct{
     Port            int         `xml:"Port,attr"`
 }
 
+func (spo ServiceProviderOffering) String() string{
+    return fmt.Sprintf("%s:%d", spo.Address, spo.Port)
+}
+
 type ServiceProvider struct{
     DomainName      string      `xml:"DomainName,attr"`
     Version         int         `xml:"Version,attr"`
