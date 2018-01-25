@@ -73,8 +73,36 @@ func (reader DVBSTPFileReader) NextFile() ([]byte, error){
 
     var bar *pb.ProgressBar
 
+    newbar := func(size int){
+        if bar != nil{
+            bar.Finish()
+        }
+        bar = pb.New(size)
+        bar.ShowSpeed = true
+        bar.SetWidth(120)
+        //log.Println("BAR STARTS")
+        bar.Start()
+    }
+
+    endbar := func(){
+        if bar != nil{
+            bar.Finish()
+        }
+        //log.Println("BAR FINISH")
+    }
+    writebar := func(b []byte){
+        if bar != nil{
+            bar.Write(b)
+        }
+    }
+
     for{
         msg := reader.msgreader.NextMessage(nextlen)
+        if bar == nil && msg.SectionNumber != 0{
+            discard := msg.SegmentSize - (msg.SectionNumber * (DVBSTP_DGRAM_LEN - DVBSTP_HEADER_LEN))
+            log.Printf("We're in the middle of a file. Discarding first %d bytes", discard)
+            newbar(discard)
+        }
 
         // Next length. Should be DVBSTP_DGRAM_LEN except for the last section
         if msg.SectionNumber == msg.LastSectionNumber - 1{
@@ -85,31 +113,34 @@ func (reader DVBSTPFileReader) NextFile() ([]byte, error){
         }
 
         if len(msgs) == 0 && msg.SectionNumber != 0{ //Looking for the first section
+            writebar(msg.Payload)
             continue
         }
 
         if len(msgs) > 0{
             if msg.SectionNumber != prevmsg.SectionNumber + 1{
+                endbar()
                 log.Printf("WRONG SECTION SHOULD BE %d FOUND %d\n", prevmsg.SectionNumber + 1, msg.SectionNumber)
                 return nil, errors.New("Error in sequence")
             }
         }else{
+            endbar()
             log.Printf("New file starts. Size is %d bytes. Has %d sections.\n", msg.SegmentSize, msg.LastSectionNumber + 1)
-            bar = pb.New(msg.SegmentSize)
-            bar.Start()
+            newbar(msg.SegmentSize)
         }
 
-        msgs = append(msgs, msg)
+        writebar(msg.Payload)
 
-        bar.Write(msg.Payload)
+        msgs = append(msgs, msg)
 
         prevmsg = msg
 
         if msg.SectionNumber == msg.LastSectionNumber{
-            bar.Finish()
             break
         }
     }
+
+    endbar()
 
     data := make([]byte, 0)
     for _, msg := range msgs{
