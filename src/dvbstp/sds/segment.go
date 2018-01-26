@@ -1,18 +1,16 @@
-package main
+package sds
 
 import (
     "encoding/binary"
     "net"
-    "log"
-//    "strings"
 )
 
 const (
-    DVBSTP_HEADER_LEN = 12
-    DVBSTP_CRC_LEN  = 4
+    SEGMENT_HEADER_LEN = 12
+    SEGMENT_CRC_LEN  = 4
 )
 
-type DVBSTP struct{
+type SDSSegment struct{
     Ver                 uint8
     Resrv               uint8
     Enc                 uint8
@@ -37,8 +35,8 @@ type DVBSTP struct{
 
 }
 
-func NewDVBSTPMessage(payload []byte) *DVBSTP{
-    m := &DVBSTP{}
+func NewSDSSegment(payload []byte) *SDSSegment{
+    m := &SDSSegment{}
     m.Ver = payload[0] & 0xc0
     m.Resrv = payload[0] & 0x38
     m.Enc = payload[0] & 0x6
@@ -61,42 +59,12 @@ func NewDVBSTPMessage(payload []byte) *DVBSTP{
     //m.Payload = payload[m.Hdrlen: len(payload) - int(m.Hdrlen) - 4]
 
     if m.CRCPresent{
-        m.CRC = binary.BigEndian.Uint32(payload[len(payload) - DVBSTP_CRC_LEN:])
-        m.Payload = payload[DVBSTP_HEADER_LEN:len(payload) - DVBSTP_CRC_LEN]
+        m.CRC = binary.BigEndian.Uint32(payload[len(payload) - SEGMENT_CRC_LEN:])
+        m.Payload = payload[SEGMENT_HEADER_LEN:len(payload) - SEGMENT_CRC_LEN]
     }else{
-        m.Payload = payload[DVBSTP_HEADER_LEN:]
+        m.Payload = payload[SEGMENT_HEADER_LEN:]
     }
 
     return m
 }
 
-
-type DVBSTPReader struct{
-    path            string
-}
-
-func NewDVBSTPReader(path string) *DVBSTPReader{
-    r := &DVBSTPReader{}
-    r.path = path
-
-    return r
-}
-
-func (r *DVBSTPReader) ReadFiles(howmany int) [][]byte{
-    log.Printf("Will read %d files from %s", howmany, r.path)
-
-    filereader := NewDVBSTPFileReader(r.path)
-    files := make([][]byte, 0)
-    for len(files) < howmany{
-        file, err := filereader.NextFile(); if err != nil{
-            log.Printf("Error reading file: %s. Starting over", err)
-            files = make([][]byte, 0) //Start over if errors found. We don't want dupe files
-            continue
-        }
-        files = append(files, file)
-    }
-
-    log.Printf("All %d files read.", len(files))
-
-    return files
-}

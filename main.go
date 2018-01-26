@@ -45,13 +45,13 @@ func main(){
         fromprefix += "/"
     }    
 
-    //saveto
+    //savem3u
     var writer io.Writer
 
-    if opts.saveto.Raw == "stdout"{
+    if opts.savem3u.Raw == "stdout"{
         writer = os.Stdout
     }else{ 
-        writer, err = os.OpenFile(opts.saveto.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
+        writer, err = os.OpenFile(opts.savem3u.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
             log.Fatal(err)
         }
 
@@ -75,18 +75,20 @@ func main(){
         return
     }
 
-    groups := movi.GetChannelGroups(packages)
+    if opts.savem3u.Raw != ""{
+        groups := movi.GetChannelGroups(packages)
 
-    var keys []int
-    for k := range groups{
-        keys = append(keys, k)
+        var keys []int
+        for k := range groups{
+            keys = append(keys, k)
+        }
+        sort.Ints(keys)
+
+        //channels := movi.GetChannelList(nil) //packages)
+        //DumpIPTVSimple(channels, "172.16.10.9", 9998)
+        data := DumpGroupsAsIPTVSimple(groups, streamprefix)
+        writer.Write(data)
+        log.Printf("Channels written to %+v %s", writer, opts.savem3u)
     }
-    sort.Ints(keys)
-
-    //channels := movi.GetChannelList(nil) //packages)
-    //DumpIPTVSimple(channels, "172.16.10.9", 9998)
-    data := DumpGroupsAsIPTVSimple(groups, streamprefix)
-    writer.Write(data)
-    log.Printf("Channels written to %+v %s", writer, opts.saveto)
 }
 

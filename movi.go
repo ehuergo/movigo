@@ -5,6 +5,7 @@ import (
     "log"
     "fmt"
     "sort"
+    "dvbstp"
 )
 
 const (
@@ -49,8 +50,7 @@ func(movi *Movi) Scan(prefix string) bool{
 
     // TV-Anytime
     //nownexturi := movi.bcg.GetNowNextAddress()
-    //r := NewDVBSTPReader(prefix + nownexturi)
-    //files := r.ReadFiles(10)
+    //files := dvbstp.ReadFiles(prefix + nownexturi, 10)
     //log.Println(files)
 
     log.Printf("%+v\n",movi)
@@ -58,8 +58,7 @@ func(movi *Movi) Scan(prefix string) bool{
 }
 
 func (movi *Movi) FindDiscoveryFiles(path string) bool{
-    r := NewDVBSTPReader(path)
-    files := r.ReadFiles(3)
+    files := dvbstp.ReadFiles(path, 3)
 
     for _, file := range files{
         //log.Println(string(file))
@@ -90,8 +89,7 @@ func (movi *Movi) FindDiscoveryFiles(path string) bool{
 }
 
 func (movi *Movi) FindAreaServiceProvider(path string){
-    r := NewDVBSTPReader(path)
-    files := r.ReadFiles(1)
+    files := dvbstp.ReadFiles(path, 1)
 
     spd_raw := files[0]
 

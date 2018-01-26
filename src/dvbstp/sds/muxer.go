@@ -1,76 +1,45 @@
-package main
+package sds
 
 import (
     "io"
-    "os"
+    "hash/crc32"
+    "github.com/cheggaaa/pb"
     "log"
     "fmt"
     "errors"
-    "net/http"
-    "hash/crc32"
-    "github.com/cheggaaa/pb"
+    "readers"
 )
 
 const (
-    DVBSTP_DGRAM_LEN = 1400
+    DGRAM_LEN = 1400
 )
 
-
-type DVBSTPMessageReader struct{
-    r               io.Reader
-    uri             string
+type SDSMuxer struct{
+    sr            *SegmentReader
 }
 
-func (reader DVBSTPMessageReader) NextDatagram(length int) []byte{
-    b := make([]byte, length)
-    n, err := io.ReadFull(reader.r, b); if err != nil{
-        log.Fatal(err)
-    }
-
-    if n != length{
-        log.Fatal(n, "!=", length)
-    }
-
-    //log.Println("Requested", length, "read", n, "OK?", n == length)
-
-    return b
-}
-
-func (reader DVBSTPMessageReader) NextMessage(length int) *DVBSTP{
-    dgram := reader.NextDatagram(length)
-    msg := NewDVBSTPMessage(dgram)
-
-    //log.Printf("%d/%d (%d)", msg.SectionNumber, msg.LastSectionNumber, msg.SegmentSize)
-
-    return msg
-}
-
-type DVBSTPFileReader struct{
-    msgreader       *DVBSTPMessageReader
-}
-
-func NewDVBSTPFileReader(uri string) DVBSTPFileReader{
+func NewSDSMuxer(uri string) SDSMuxer{
 
     var bytereader io.Reader
 
     if len(uri) > 7 && uri[:7] == "http://"{
-        bytereader = getHttpReader(uri)
+        bytereader = readers.GetHttpReader(uri)
     }else if len(uri) > 8 && uri[:8] == "https://"{
-        bytereader = getHttpReader(uri)
+        bytereader = readers.GetHttpReader(uri)
     }else{
-        bytereader = getFilesystemReader(uri)
+        bytereader = readers.GetFilesystemReader(uri)
     }
 
-    msgreader := &DVBSTPMessageReader{bytereader, uri}
+    sr := &SegmentReader{bytereader, uri}
 
-    return DVBSTPFileReader{msgreader}
+    return SDSMuxer{sr}
 }
 
-func (reader DVBSTPFileReader) NextFile() ([]byte, error){
+func (mux SDSMuxer) NextFile() ([]byte, error){
 
-    msgs := make([]*DVBSTP, 0)
-    nextlen := DVBSTP_DGRAM_LEN
-    var prevmsg *DVBSTP
+    msgs := make([]*SDSSegment, 0)
+    nextlen := DGRAM_LEN
+    var prevmsg *SDSSegment
 
     var bar *pb.ProgressBar
 
@@ -98,19 +67,19 @@ func (reader DVBSTPFileReader) NextFile() ([]byte, error){
     }
 
     for{
-        msg := reader.msgreader.NextMessage(nextlen)
+        msg := mux.sr.NextSegment(nextlen)
         if bar == nil && msg.SectionNumber != 0{
-            discard := msg.SegmentSize - (msg.SectionNumber * (DVBSTP_DGRAM_LEN - DVBSTP_HEADER_LEN))
+            discard := msg.SegmentSize - (msg.SectionNumber * (DGRAM_LEN - SEGMENT_HEADER_LEN))
             log.Printf("We're in the middle of a file. Discarding first %d bytes", discard)
             newbar(discard)
         }
 
-        // Next length. Should be DVBSTP_DGRAM_LEN except for the last section
+        // Next length. Should be DGRAM_LEN except for the last section
         if msg.SectionNumber == msg.LastSectionNumber - 1{
-            read := (DVBSTP_DGRAM_LEN - DVBSTP_HEADER_LEN) * (msg.SectionNumber + 1)
-            nextlen = msg.SegmentSize - read + DVBSTP_HEADER_LEN + DVBSTP_CRC_LEN //last segment includes CRC
+            read := (DGRAM_LEN - SEGMENT_HEADER_LEN) * (msg.SectionNumber + 1)
+            nextlen = msg.SegmentSize - read + SEGMENT_HEADER_LEN + SEGMENT_CRC_LEN //last segment includes CRC
         }else{
-            nextlen = DVBSTP_DGRAM_LEN
+            nextlen = DGRAM_LEN
         }
 
         if len(msgs) == 0 && msg.SectionNumber != 0{ //Looking for the first section
@@ -160,21 +129,4 @@ func (reader DVBSTPFileReader) NextFile() ([]byte, error){
     }
 
     return data, nil
-}
-
-func getHttpReader(uri string) io.Reader{
-    get, err := http.Get(uri); if err != nil{
-        log.Fatal(err)
-    }
-
-    return get.Body
-}
-
-func getFilesystemReader(uri string) io.Reader{
-    log.Println(uri)
-    f, err := os.Open(uri); if err != nil{
-        log.Fatal(err)
-    }
-
-    return f
 }
