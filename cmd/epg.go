@@ -63,17 +63,29 @@ func main(){
     log.Println("Have", len(export.Pases), "pases")
 
     sort.Slice(export.Pases, func(i, j int) bool{ 
-        return export.Pases[i].Fecha + " " + export.Pases[i].Hora < export.Pases[j].Fecha + " " + export.Pases[j].Hora
+            //return export.Pases[i].Fecha + " " + export.Pases[i].Hora + " " + export.Pases[i].Cadena < export.Pases[j].Fecha + " " + export.Pases[j].Hora + " " + export.Pases[j].Cadena
+            return export.Pases[i].Cadena + export.Pases[i].Fecha + export.Pases[i].Hora < export.Pases[j].Cadena + export.Pases[j].Fecha + export.Pases[j].Hora
     })
+    //sort.Slice(export.Pases, func(i, j int) bool{ 
+    //    return export.Pases[i].Cadena < export.Pases[j].Cadena
+    //})
 
     programme := make([]*Programme, 0)
     channels := make([]*Channel, 0)
     chs_done := make(map[string]bool)
-    for _, pase := range export.Pases{
+    for i, pase := range export.Pases{
         p := &Programme{}
         t, _ := time.Parse("2006-01-02 15:04:05", pase.Fecha + " " + pase.Hora)
         p.Start = t.Format("20060102150405 -0700")
-        p.Stop = t.Add(30 * time.Minute).Format("20060102150405 -0700")
+
+        //log.Println(i)
+        if i + 1 < len(export.Pases) && export.Pases[i].Cadena == export.Pases[i+1].Cadena{
+            t2, _ := time.Parse("2006-01-02 15:04:05", export.Pases[i+1].Fecha + " " + export.Pases[i+1].Hora)
+            p.Stop = t2.Format("20060102150405 -0700")
+        }else{
+            p.Stop = t.Add(30 * time.Minute).Format("20060102150405 -0700")
+        }
+
         p.Channel = pase.Cadena
         p.Title = pase.DescCorta
         p.SubTitle = pase.Titulo
