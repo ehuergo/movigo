@@ -45,7 +45,7 @@ func parseCommandLine() *Opts{
     flag.BoolVar(&opts.listpackages, "l", false, "")
     flag.BoolVar(&opts.verbose, "v", false, "")
 
-    opts.savem3u.Raw = "stdout"
+    //opts.savem3u.Raw = "stdout"
 
     flag.Parse()
 

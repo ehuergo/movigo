@@ -50,7 +50,7 @@ func main(){
 
     if opts.savem3u.Raw == "stdout"{
         writer = os.Stdout
-    }else{ 
+    }else if opts.savem3u.Raw != ""{ 
         writer, err = os.OpenFile(opts.savem3u.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
             log.Fatal(err)
         }
