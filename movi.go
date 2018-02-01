@@ -49,16 +49,26 @@ func(movi *Movi) Scan(prefix string) bool{
     }
 
     // TV-Anytime
+    // Now-Next
     //nownexturi := movi.bcg.GetNowNextAddress()
-    //files := dvbstp.ReadFiles(prefix + nownexturi, 10)
+    //files := dvbstp.ReadBIMFiles(prefix + nownexturi, 10)
+    //files := dvbstp.ReadSDSFiles(prefix + 
     //log.Println(files)
+    // EPG
+    epguris := movi.bcg.GetEPGAddresses()
+    log.Println(epguris)
+    for _, uri := range epguris{
+        log.Println("URI", uri)
+        files := dvbstp.ReadSDSFiles(prefix + uri, 1)
+        log.Println(files)
+    }
 
     log.Printf("%+v\n",movi)
     return true
 }
 
 func (movi *Movi) FindDiscoveryFiles(path string) bool{
-    files := dvbstp.ReadFiles(path, 3)
+    files := dvbstp.ReadSDSFiles(path, 3)
 
     for _, file := range files{
         //log.Println(string(file))
@@ -89,7 +99,7 @@ func (movi *Movi) FindDiscoveryFiles(path string) bool{
 }
 
 func (movi *Movi) FindAreaServiceProvider(path string){
-    files := dvbstp.ReadFiles(path, 1)
+    files := dvbstp.ReadSDSFiles(path, 1)
 
     spd_raw := files[0]
 

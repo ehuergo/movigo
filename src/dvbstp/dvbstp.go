@@ -6,8 +6,8 @@ import (
 )
 
 
-func ReadFiles(path string, howmany int) [][]byte{
-    log.Printf("Will read %d files from %s", howmany, path)
+func ReadSDSFiles(path string, howmany int) [][]byte{
+    log.Printf("Will read %d SD&S files from %s", howmany, path)
 
     sdsmuxer := sds.NewSDSMuxer(path)
     files := make([][]byte, 0)
@@ -24,3 +24,10 @@ func ReadFiles(path string, howmany int) [][]byte{
 
     return files
 }
+
+/*
+func ReadBIMFiles(path string, howmany int) [][]byte{
+    log.Printf("Will read %d BiM files from %s", howmany, path)
+    bimmuxer := bim.NewBIMMuxer(path)
+}
+*/

@@ -140,6 +140,15 @@ func (d *BCGDiscovery) GetNowNext() *BCG{
     return nil
 }
 
+func (d *BCGDiscovery) getEPG() *BCG{
+    for _, bcg := range d.BCGList{
+        if bcg.Id == "EPG"{
+            return &bcg
+        }
+    }
+    return nil
+}
+
 func (d *BCGDiscovery) GetNowNextAddress() string{
     nn := d.GetNowNext()
     if len(nn.TransportMode.DVBSTP) > 0{
@@ -147,6 +156,18 @@ func (d *BCGDiscovery) GetNowNextAddress() string{
     }
 
     return ""
+}
+
+func (d *BCGDiscovery) GetEPGAddresses() []string{
+    addresses := make([]string, 0)
+    epg := d.getEPG()
+    if len(epg.TransportMode.DVBBINSTP) > 0{
+        for _, dvbbinstp := range epg.TransportMode.DVBBINSTP{
+            addresses = append(addresses, fmt.Sprintf("%s:%d", dvbbinstp.Address, dvbbinstp.Port))
+        }
+    }
+
+    return addresses
 }
 
 func (d *BCGDiscovery) GetList(){
