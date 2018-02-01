@@ -3,13 +3,14 @@ package dvbstp
 import (
     "log"
     "dvbstp/sds"
+    "io"
 )
 
 
-func ReadSDSFiles(path string, howmany int) [][]byte{
-    log.Printf("Will read %d SD&S files from %s", howmany, path)
+func ReadSDSFiles(r io.Reader, howmany int) [][]byte{
+    log.Printf("Will read %d SD&S files from %s", howmany, r)
 
-    sdsmuxer := sds.NewSDSMuxer(path)
+    sdsmuxer := sds.NewSDSMuxer(r)
     files := make([][]byte, 0)
     for len(files) < howmany{
         file, err := sdsmuxer.NextFile(); if err != nil{
@@ -22,12 +23,8 @@ func ReadSDSFiles(path string, howmany int) [][]byte{
 
     log.Printf("All %d files read.", len(files))
 
+    r.(io.Closer).Close()
+
     return files
 }
 
-/*
-func ReadBIMFiles(path string, howmany int) [][]byte{
-    log.Printf("Will read %d BiM files from %s", howmany, path)
-    bimmuxer := bim.NewBIMMuxer(path)
-}
-*/

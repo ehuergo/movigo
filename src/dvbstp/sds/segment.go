@@ -3,7 +3,7 @@ package sds
 import (
     "encoding/binary"
     "net"
-    "fmt"
+//    "fmt"
 )
 
 const (
@@ -59,7 +59,7 @@ func NewSDSSegment(payload []byte) *SDSSegment{
     //m.ServiceProviderID = net.IP(payload[12:16])
     //m.Payload = payload[m.Hdrlen: len(payload) - int(m.Hdrlen) - 4]
 
-    fmt.Printf("%+v\n", m)
+    //fmt.Printf("%+v\n", m)
 
     if m.CRCPresent{
         m.CRC = binary.BigEndian.Uint32(payload[len(payload) - SEGMENT_CRC_LEN:])

@@ -7,7 +7,6 @@ import (
     "log"
     "fmt"
     "errors"
-    "readers"
 )
 
 const (
@@ -18,19 +17,9 @@ type SDSMuxer struct{
     sr            *SegmentReader
 }
 
-func NewSDSMuxer(uri string) SDSMuxer{
+func NewSDSMuxer(r io.Reader) SDSMuxer{
 
-    var bytereader io.Reader
-
-    if len(uri) > 7 && uri[:7] == "http://"{
-        bytereader = readers.GetHttpReader(uri)
-    }else if len(uri) > 8 && uri[:8] == "https://"{
-        bytereader = readers.GetHttpReader(uri)
-    }else{
-        bytereader = readers.GetFilesystemReader(uri)
-    }
-
-    sr := &SegmentReader{bytereader, uri}
+    sr := &SegmentReader{r}
 
     return SDSMuxer{sr}
 }

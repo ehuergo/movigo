@@ -7,6 +7,7 @@ import (
     //"flag"
     "io"
     "os"
+    "readers"
     //"net/url"
     //"github.com/alexflint/go-arg"
 )
@@ -14,6 +15,7 @@ import (
 func main(){
 
     var err error
+    var GetReader func(string) io.Reader
 
     opts := parseCommandLine()
     log.Printf("%+v", opts)
@@ -34,16 +36,19 @@ func main(){
     fromprefix := opts.readfrom.Raw
 
     if opts.readfrom.Scheme == "udp"{
-        fromprefix = "udp://"
+        fromprefix = ""
+        GetReader = readers.GetMulticastReader
     }else if opts.readfrom.Scheme == "udpxy"{
         fromprefix = fmt.Sprintf("http://%s/udp/", opts.readfrom.Host)
+        GetReader = readers.GetHttpReader
     }else if opts.readfrom.Scheme != ""{
         log.Fatal("Unknown scheme", opts.readfrom.Raw)
     }else if opts.readfrom.Raw == ""{
         log.Fatal("No input specified")
     }else{
         fromprefix += "/"
-    }    
+        GetReader = readers.GetFilesystemReader
+    }
 
     //savem3u
     var writer io.Writer
@@ -66,7 +71,7 @@ func main(){
     //else keep untouched
 
     movi := NewMovi(area)
-    ok := movi.Scan(fromprefix); if !ok{
+    ok := movi.Scan(GetReader, fromprefix); if !ok{
         log.Fatal("Something went wrong scanning %s", area)
     }
 

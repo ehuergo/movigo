@@ -6,6 +6,7 @@ import (
     "fmt"
     "sort"
     "dvbstp"
+    "io"
 )
 
 const (
@@ -31,11 +32,11 @@ func NewMovi(area Area) *Movi{
     return movi
 }
 
-func(movi *Movi) Scan(prefix string) bool{
+func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
 
     entrypoint := fmt.Sprintf("%s%s", prefix, EntryPointURI)
 
-    movi.FindAreaServiceProvider(entrypoint); if movi.sp == nil{
+    movi.FindAreaServiceProvider(getreader(entrypoint)); if movi.sp == nil{
         log.Fatal("No service provider found for ", movi.DomainName)
     }
 
@@ -44,7 +45,7 @@ func(movi *Movi) Scan(prefix string) bool{
     offering := movi.sp.Offering[0]
     nexturi := fmt.Sprintf("%s%s", prefix, offering)
 
-    if ok := movi.FindDiscoveryFiles(nexturi); !ok{
+    if ok := movi.FindDiscoveryFiles(getreader(nexturi)); !ok{
         log.Fatal("Some discovery files are missing", nexturi)
     }
 
@@ -59,7 +60,7 @@ func(movi *Movi) Scan(prefix string) bool{
     log.Println(epguris)
     for _, uri := range epguris{
         log.Println("URI", uri)
-        files := dvbstp.ReadSDSFiles(prefix + uri, 1)
+        files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)
         log.Println(files)
     }
 
@@ -67,8 +68,8 @@ func(movi *Movi) Scan(prefix string) bool{
     return true
 }
 
-func (movi *Movi) FindDiscoveryFiles(path string) bool{
-    files := dvbstp.ReadSDSFiles(path, 3)
+func (movi *Movi) FindDiscoveryFiles(r io.Reader) bool{
+    files := dvbstp.ReadSDSFiles(r, 3)
 
     for _, file := range files{
         //log.Println(string(file))
@@ -98,8 +99,8 @@ func (movi *Movi) FindDiscoveryFiles(path string) bool{
     return true
 }
 
-func (movi *Movi) FindAreaServiceProvider(path string){
-    files := dvbstp.ReadSDSFiles(path, 1)
+func (movi *Movi) FindAreaServiceProvider(r io.Reader){
+    files := dvbstp.ReadSDSFiles(r, 1)
 
     spd_raw := files[0]
 
