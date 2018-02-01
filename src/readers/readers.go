@@ -2,6 +2,7 @@ package readers
 
 import (
     "os"
+    "net"
     "net/http"
     "log"
     "io"
@@ -22,4 +23,14 @@ func GetFilesystemReader(uri string) io.Reader{
     }
 
     return f
+}
+
+func GetMulticastReader(uri string) io.Reader{
+    addr, err := net.ResolveUDPAddr("udp", uri); if err != nil {
+        log.Fatal(err)
+    }
+    r, _ := net.ListenMulticastUDP("udp", nil, addr)
+
+    return r
+
 }
