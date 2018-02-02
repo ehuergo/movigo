@@ -10,8 +10,9 @@ type SegmentReader struct{
 }
 
 func (sr SegmentReader) NextDatagram(length int) []byte{
-    b := make([]byte, 1500)
-    n, err := sr.r.Read(b); if err != nil{
+    b := make([]byte, length)
+    //n, err := sr.r.Read(b); if err != nil{
+    n, err := io.ReadFull(sr.r, b); if err != nil{
         log.Fatal(err)
     }
 
