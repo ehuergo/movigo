@@ -7,6 +7,7 @@ import (
     "sort"
     "dvbstp"
     "io"
+    "epg"
 )
 
 const (
@@ -58,11 +59,17 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
     // EPG
     epguris := movi.bcg.GetEPGAddresses()
     log.Println(epguris)
+    files := make(map[uint16]*epg.EPGFile)
     for _, uri := range epguris{
         log.Println("URI", uri)
-        files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)
-        log.Println(files)
+        for k, file := range epg.ReadEPG(getreader(uri)).Files{
+            files[k] = file
+        }
+        //files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)
+        //log.Println(files)
     }
+
+    log.Println(files)
 
     log.Printf("%+v\n",movi)
     return true
