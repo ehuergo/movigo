@@ -152,7 +152,13 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string, scandays 
             }
             log.Println("URI", uri)
             for k, file := range epg.ReadMulticastEPG(getreader(prefix + uri)).Files{
-                movi.epgfiles[k] = file
+                _, exists := movi.epgfiles[k]; if exists{
+                    for _, program := range file.Programs{
+                        movi.epgfiles[k].Programs = append(movi.epgfiles[k].Programs, program)
+                    }
+                }else{
+                    movi.epgfiles[k] = file
+                }
             }
             //files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)
             //log.Println(files)

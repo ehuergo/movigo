@@ -47,11 +47,12 @@ func ReadMulticastEPG(r io.Reader) *EPG{
         if chunk.End{
             file := ParseFile(filedata)
             if file != nil && file.Size > 0 && len(file.Data) != 0{
-                fmt.Printf("FILE! %s\n", file.ServiceURL)
+                fmt.Printf("FILE! %s: ", file.ServiceURL)
                 _, ok := epg.Files[file.ServiceId]; if ok{
                     break
                 }
                 programs := ParsePrograms(file.Data)
+                fmt.Printf("%d programs\n ", len(programs))
                 epg.Files[file.ServiceId] = &EPGFile{file,programs}
             }
             filedata = make([]byte, 0)
