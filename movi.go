@@ -186,40 +186,21 @@ func (movi *Movi) FindDiscoveryFiles(r io.Reader) bool{
 }
 
 
-func (movi *Movi) ListPackages(){
+func (movi *Movi) GetPackages() map[string][]*LogicalChannel{
+    packages := make(map[string][]*LogicalChannel)
     for _, x := range movi.pd.PackageList{
         log.Println("\n->", x.PackageName, len(x.Services))
-        for _, ser := range x.Services{
-            si := movi.bd.GetServiceByTextualID(ser.TextualID.ServiceName); if si == nil{
-                log.Println("Service spec not found for TextualID", ser.TextualID.ServiceName)
+        packages[x.PackageName] = make([]*LogicalChannel, 0)
+        for _, service := range x.Services{
+            si := movi.bd.GetServiceByTextualID(service.TextualID.ServiceName); if si == nil{
+                log.Println("Service spec not found for TextualID", service.TextualID.ServiceName)
             }else{
-                log.Println(ser.LogicalChannelNumber, ser.TextualID.ServiceName, si.SI.Name)
+                channel := NewLogicalChannel(x.PackageName, service, si, movi.epgfiles[uint16(service.TextualID.ServiceName)])
+                packages[x.PackageName] = append(packages[x.PackageName], channel)
             }
         }
     }
-}
-
-func (movi *Movi) GetUniqueChannels() []*LogicalChannel{
-
-    groups := movi.GetChannelGroups(nil)
-    channels := make([]*LogicalChannel, 0)
-
-    for _, group := range groups{
-        if len(group.HD) > 0{
-            if len(group.SD) > 0{
-                group.SD[0].Number += 1000
-                channels = append(channels, group.SD[0])
-                if group.HD[0].EPG == nil && group.SD[0].EPG != nil{
-                    group.HD[0].EPG = group.SD[0].EPG
-                }
-            }
-            channels = append(channels, group.HD[0])
-        }else if len(group.SD) > 0{
-                channels = append(channels, group.SD[0])
-        }
-    }
-
-    return channels
+    return packages
 }
 
 func (movi *Movi) GetChannelGroups(packages map[string]string) map[int]*ChannelGroup{

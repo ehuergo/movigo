@@ -89,8 +89,13 @@ func main(){
     }
 
     if opts.listpackages{
-        movi.ListPackages()
-        return
+        packages := movi.GetPackages()
+        for name, channels := range packages{
+            log.Printf("\n-> Package: %s Channels %d\n", name, len(channels))
+            for _, channel := range channels{
+                log.Printf("% 5d (% 5d) %s\n", channel.Number, channel.Id, channel.Name)
+            }
+        }
     }
 
     if opts.savem3u.Raw != ""{
