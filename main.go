@@ -9,6 +9,7 @@ import (
     "os"
     "movigo/readers"
     "movigo/movi"
+    "movigo/output"
     //"net/url"
     //"github.com/alexflint/go-arg"
 )
@@ -110,14 +111,14 @@ func main(){
 
         channels := m.GetChannelList(nil, true, 1000)
         log.Println(channels)
-        data := DumpIPTVSimple(channels, streamprefix)
+        data := output.DumpIPTVSimple(channels, streamprefix)
         m3uwriter.Write(data)
         log.Printf("Channels written to %+v %s", m3uwriter, opts.savem3u)
     }
 
     if opts.savexmltv.Raw != ""{
         channels := m.GetChannelList(nil, true, 1000)
-        data := dumpXMLTVEPG(channels)
+        data := output.DumpXMLTVEPG(channels)
         xmltvwriter.Write(data)
         log.Printf("XMLTV written to %+v %s", xmltvwriter, opts.savexmltv)
     }
