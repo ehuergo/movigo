@@ -94,17 +94,6 @@ func main(){
     }
 
     if opts.savem3u.Raw != ""{
-        //groups := movi.GetChannelGroups(packages)
-
-        //var keys []int
-        //for k := range groups{
-        //    keys = append(keys, k)
-        //}
-        //sort.Ints(keys)
-
-        //channels := movi.GetChannelList(nil) //packages)
-        //DumpIPTVSimple(channels, "172.16.10.9", 9998)
-        //data := DumpGroupsAsIPTVSimple(groups, streamprefix)
         channels := movi.GetUniqueChannels()
         data := DumpIPTVSimple(channels, streamprefix)
         m3uwriter.Write(data)
@@ -116,16 +105,6 @@ func main(){
         data := dumpXMLTVEPG(channels)
         xmltvwriter.Write(data)
         log.Printf("XMLTV written to %+v %s", xmltvwriter, opts.savexmltv)
-        //groups := movi.GetChannelGroups(nil)
-        //var keys []int
-        //for k := range groups{
-        //    keys = append(keys, k)
-        //}
-        //sort.Ints(keys)
-
-        //data := DumpXMLTV(groups, 
-        //m3uwriter.Write(data)
-        //log.Printf("Channels written to %+v %s", writer, opts.savem3u)
     }
 }
 

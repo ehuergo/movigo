@@ -19,6 +19,7 @@ type Opts struct{
     streamaccess    URL             // udpxy | udp | rtp
 
     area            int             // see movistartv.go for area details
+    cachedays       int
     listpackages    bool
     verbose         bool
 }
@@ -46,6 +47,7 @@ func parseCommandLine() *Opts{
     flag.Var(&opts.savexmltv, "savexmltv", "stdout Dumps the file to stdout. Otherwise it's considered a path in the filesystem. Defaults to stdout")
     flag.Var(&opts.streamaccess, "streamaccess", "udpxy://IP:PORT, udp:// or rtp://")
     flag.IntVar(&opts.area, "area", int(MADRID), "Area code")
+    flag.IntVar(&opts.cachedays, "cachedays", 1, "Ignore cache if older than N days (default: 1)")
     flag.BoolVar(&opts.listpackages, "l", false, "")
     flag.BoolVar(&opts.verbose, "v", false, "")
 
