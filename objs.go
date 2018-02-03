@@ -273,7 +273,7 @@ func NewLogicalChannel(packagename string, pkgservice *Service, service *SingleS
         Name:           strings.Replace(service.SI.Name, "\n", "", -1),
         Number:         pkgservice.LogicalChannelNumber,
         Id:             pkgservice.TextualID.ServiceName,
-        HD:             service.SI.Name[len(service.SI.Name)-2:] == "HD",
+        HD:             strings.Contains(service.SI.Name, "HD"), //service.SI.Name[len(service.SI.Name)-2:] == "HD",
         FromPackage:    packagename,
         Url:            url,
         Description:    service.SI.Description,

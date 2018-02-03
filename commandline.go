@@ -21,6 +21,7 @@ type Opts struct{
     area            int             // see movistartv.go for area details
     cachedays       int
     listpackages    bool
+    listchannels    bool
     verbose         bool
 }
 
@@ -48,7 +49,8 @@ func parseCommandLine() *Opts{
     flag.Var(&opts.streamaccess, "streamaccess", "udpxy://IP:PORT, udp:// or rtp://")
     flag.IntVar(&opts.area, "area", int(MADRID), "Area code")
     flag.IntVar(&opts.cachedays, "cachedays", 1, "Ignore cache if older than N days (default: 1)")
-    flag.BoolVar(&opts.listpackages, "l", false, "")
+    flag.BoolVar(&opts.listpackages, "packages", false, "")
+    flag.BoolVar(&opts.listchannels, "channels", false, "")
     flag.BoolVar(&opts.verbose, "v", false, "")
 
     //opts.savem3u.Raw = "stdout"

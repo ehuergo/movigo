@@ -93,8 +93,15 @@ func main(){
         for name, channels := range packages{
             log.Printf("\n-> Package: %s Channels %d\n", name, len(channels))
             for _, channel := range channels{
-                log.Printf("% 5d (% 5d) %s\n", channel.Number, channel.Id, channel.Name)
+                printChannel(channel)
             }
+        }
+    }
+
+    if opts.listchannels{
+        channels := movi.GetChannelList(nil, true, 1000)
+        for _, channel := range channels{
+            printChannel(channel)
         }
     }
 
@@ -114,4 +121,11 @@ func main(){
         log.Printf("XMLTV written to %+v %s", xmltvwriter, opts.savexmltv)
     }
 }
+
+
+func printChannel(channel *LogicalChannel){
+    hasepg := channel.EPG != nil
+    log.Printf("% 5d (% 5d) % -28s %t\n", channel.Number, channel.Id, channel.Name, hasepg)
+}
+
 
