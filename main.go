@@ -3,7 +3,7 @@ package main
 import (
     "fmt"
     "log"
-    "sort"
+//    "sort"
     //"flag"
     "io"
     "os"
@@ -25,10 +25,10 @@ func main(){
         log.SetFlags(log.LstdFlags | log.Lshortfile)
     }
 
-    packages := map[string]string{
-        "UTX32": "TDT",
-        "UTX64": "Extra",
-    }
+    //packages := map[string]string{
+    //    "UTX32": "TDT",
+    //    "UTX64": "Extra",
+    //}
 
     area := Area(opts.area)
 
@@ -51,16 +51,29 @@ func main(){
     }
 
     //savem3u
-    var writer io.Writer
+    var m3uwriter io.Writer
 
     if opts.savem3u.Raw == "stdout"{
-        writer = os.Stdout
+        m3uwriter = os.Stdout
     }else if opts.savem3u.Raw != ""{ 
-        writer, err = os.OpenFile(opts.savem3u.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
+        m3uwriter, err = os.OpenFile(opts.savem3u.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
             log.Fatal(err)
         }
 
-        defer writer.(*os.File).Close()
+        defer m3uwriter.(*os.File).Close()
+    }
+
+    //savexmltv
+    var xmltvwriter io.Writer
+
+    if opts.savexmltv.Raw == "stdout"{
+        xmltvwriter = os.Stdout
+    }else if opts.savexmltv.Raw != ""{ 
+        xmltvwriter, err = os.OpenFile(opts.savexmltv.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
+            log.Fatal(err)
+        }
+
+        defer xmltvwriter.(*os.File).Close()
     }
 
     //streamacceess
@@ -81,19 +94,38 @@ func main(){
     }
 
     if opts.savem3u.Raw != ""{
-        groups := movi.GetChannelGroups(packages)
+        //groups := movi.GetChannelGroups(packages)
 
-        var keys []int
-        for k := range groups{
-            keys = append(keys, k)
-        }
-        sort.Ints(keys)
+        //var keys []int
+        //for k := range groups{
+        //    keys = append(keys, k)
+        //}
+        //sort.Ints(keys)
 
         //channels := movi.GetChannelList(nil) //packages)
         //DumpIPTVSimple(channels, "172.16.10.9", 9998)
-        data := DumpGroupsAsIPTVSimple(groups, streamprefix)
-        writer.Write(data)
-        log.Printf("Channels written to %+v %s", writer, opts.savem3u)
+        //data := DumpGroupsAsIPTVSimple(groups, streamprefix)
+        channels := movi.GetUniqueChannels()
+        data := DumpIPTVSimple(channels, streamprefix)
+        m3uwriter.Write(data)
+        log.Printf("Channels written to %+v %s", m3uwriter, opts.savem3u)
+    }
+
+    if opts.savexmltv.Raw != ""{
+        channels := movi.GetUniqueChannels()
+        data := dumpXMLTVEPG(channels)
+        xmltvwriter.Write(data)
+        log.Printf("XMLTV written to %+v %s", xmltvwriter, opts.savexmltv)
+        //groups := movi.GetChannelGroups(nil)
+        //var keys []int
+        //for k := range groups{
+        //    keys = append(keys, k)
+        //}
+        //sort.Ints(keys)
+
+        //data := DumpXMLTV(groups, 
+        //m3uwriter.Write(data)
+        //log.Printf("Channels written to %+v %s", writer, opts.savem3u)
     }
 }
 

@@ -46,33 +46,17 @@ func ReadEPG(r io.Reader) *EPG{
         if chunk.End{
             file := ParseFile(filedata)
             if file != nil && file.Size > 0 && len(file.Data) != 0{
-                //fmt.Printf("FILE! %s", file.ServiceURL)
+                fmt.Printf("FILE! %s\n", file.ServiceURL)
                 _, ok := epg.Files[file.ServiceId]; if ok{
                     break
                 }
-                //epg.Files[file.ServiceId] = file
-
-                //xmltvc := &XMLTVChannel{}
-                //xmltvc.Id = fmt.Sprintf("%d", file.ServiceId)
-                //xmltvc.Name = file.ServiceURL //FIXME
-                //xmltvf.Channel = append(xmltvf.Channel, xmltvc)
-
                 programs := ParsePrograms(file.Data)
-                //for _, program := range programs{
-                //    //log.Printf("PROGRAM %+v\n", program)
-                //    xmltvp := &XMLTVProgramme{}
-                //    xmltvp.Start = program.Start.Format("20060102150405 -0700")
-                //    xmltvp.Stop = program.Start.Add(program.Duration).Format("20060102150405 -0700")
-                //    xmltvp.Channel = fmt.Sprintf("%d", file.ServiceId)
-                //    xmltvp.Title = program.Title
-                //    xmltvp.Date = program.Start.Format("20060102")
-                //    xmltvf.Programme = append(xmltvf.Programme, xmltvp)
-                //}
                 epg.Files[file.ServiceId] = &EPGFile{file,programs}
             }
             filedata = make([]byte, 0)
         }
     }
+    r.(io.Closer).Close()
     return epg
 }
 

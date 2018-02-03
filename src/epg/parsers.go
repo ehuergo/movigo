@@ -3,9 +3,10 @@ package epg
 // All credits to: https://github.com/MovistarTV/tv_grab_es_movistartv/blob/master/tv_grab_es_movistartv.py#L610
 
 import (
-    "fmt"
+//    "fmt"
     "time"
     "encoding/binary"
+    "encoding/json"
 )
 
 type Chunk struct{
@@ -27,7 +28,7 @@ func ParseChunk(data []byte) *Chunk{
     chunk.ChunkNumber = Uint16(data[8:10]) / 0x10
     chunk.ChunkCount = data[10]
 
-    fmt.Printf("CHUNK %+v\n", chunk)
+    //fmt.Printf("CHUNK %+v\n", chunk)
     chunk.Data = data[12:]
 
     return chunk
@@ -70,11 +71,67 @@ type Program struct{
     Serie
 }
 
+func (p *Program) MarshalJSON() ([]byte, error){
+    return json.Marshal(&struct{
+        Start       int64
+        Duration    float64
+        TitleEnd    uint8
+        Pid         uint32
+        Genre       uint8
+        Age         uint8
+        Title       string
+        IsSerie     bool
+        Serie
+    }{
+        Start:      p.Start.Unix(),
+        Duration:   p.Duration.Seconds(),
+        TitleEnd:   p.TitleEnd,
+        Pid:        p.Pid,
+        Genre:      p.Genre,
+        Age:        p.Age,
+        Title:      p.Title,
+        IsSerie:    p.IsSerie,
+        Serie:      p.Serie,
+    })
+}
+
+func (p *Program) UnmarshalJSON(data []byte) error{
+    aux := &struct{
+        Start       int64
+        Duration    float64
+        TitleEnd    uint8
+        Pid         uint32
+        Genre       uint8
+        Age         uint8
+        Title       string
+        IsSerie     bool
+        Serie
+    }{}
+
+    err := json.Unmarshal(data, aux); if err != nil{
+        return err
+    }
+
+    p.Start =     time.Unix(aux.Start, 0)
+    p.Duration =  time.Duration(aux.Duration) * 1000000000
+    p.TitleEnd =  aux.TitleEnd
+    p.Pid =       aux.Pid
+    p.Genre =     aux.Genre
+    p.Age =       aux.Age
+    p.Title =     aux.Title
+    p.IsSerie =   aux.IsSerie
+    p.Serie =     aux.Serie
+
+    //fmt.Println(p)
+
+    return nil
+}
+
 func ParsePrograms(data []byte) []*Program{
     progs := make([]*Program, 0)
     off := 0
     //log.Println(data)
-    for off + 32 < len(data){
+    for off + 96 < len(data){
         //log.Println(data[off:off+24])
         prog := &Program{}
         prog.Pid = Uint32(data[off:off+4])

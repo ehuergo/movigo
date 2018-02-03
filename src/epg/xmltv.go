@@ -1,6 +1,11 @@
 package epg
 
+import (
+    "encoding/xml"
+)
+
 type XMLTVFile struct{
+    XMLName     xml.Name
     Channel     []*XMLTVChannel     `xml:"channel"`
     Programme   []*XMLTVProgramme   `xml:"programme"`
 }

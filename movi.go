@@ -7,7 +7,10 @@ import (
     "sort"
     "dvbstp"
     "io"
+    "io/ioutil"
     "epg"
+    "encoding/json"
+    "path/filepath"
 )
 
 const (
@@ -22,6 +25,8 @@ type Movi struct{
     bd          *BroadcastDiscovery
     pd          *PackageDiscovery
     bcg         *BCGDiscovery
+    epgfiles    map[uint16]*epg.EPGFile
+    save        bool
 }
 
 func NewMovi(area Area) *Movi{
@@ -30,15 +35,97 @@ func NewMovi(area Area) *Movi{
     movi.area = area
     movi.DomainName = fmt.Sprintf("DEM_%d.imagenio.es", area)
 
+    movi.save = true
+
+    movi.LoadCaches()
+
     return movi
+}
+
+func (movi *Movi) SaveCaches(){
+
+    if !movi.save{ return }
+
+    jspd, err := json.Marshal(movi.spd); if err == nil{
+        ioutil.WriteFile("cache/spd.json", jspd, 0644)
+    }
+
+    jsp, err := json.Marshal(movi.sp); if err == nil{
+        ioutil.WriteFile("cache/sp.json", jsp, 0644)
+    }
+
+    jbd, err := json.Marshal(movi.bd); if err == nil{
+        ioutil.WriteFile("cache/bd.json", jbd, 0644)
+    }
+
+    jpd, err := json.Marshal(movi.pd); if err == nil{
+        ioutil.WriteFile("cache/pd.json", jpd, 0644)
+    }
+
+    jbcg, err := json.Marshal(movi.bcg); if err == nil{
+        ioutil.WriteFile("cache/bcg.json", jbcg, 0644)
+    }
+
+    for _, file := range movi.epgfiles{
+        j, err := json.Marshal(file); if err == nil{
+            ioutil.WriteFile("cache/epg/" + file.File.ServiceURL + ".json", j, 0644)
+        }
+    }
+}
+
+func (movi *Movi) LoadCaches() bool{
+    jspd, err := ioutil.ReadFile("cache/spd.json"); if err == nil{
+        err = json.Unmarshal(jspd, &movi.spd); if err != nil{
+            log.Println(err)
+        }
+    }
+    jsp, err := ioutil.ReadFile("cache/sp.json"); if err == nil{
+        json.Unmarshal(jsp, &movi.sp)
+    }
+
+    jbd, err := ioutil.ReadFile("cache/bd.json"); if err == nil{
+        json.Unmarshal(jbd, &movi.bd)
+    }
+
+    jpd, err := ioutil.ReadFile("cache/pd.json"); if err == nil{
+        json.Unmarshal(jpd, &movi.pd)
+    }
+
+    jbcg, err := ioutil.ReadFile("cache/bcg.json"); if err == nil{
+        json.Unmarshal(jbcg, &movi.bcg)
+    }
+
+    movi.epgfiles = make(map[uint16]*epg.EPGFile)
+    files, err := filepath.Glob("cache/epg/*.json")
+    for _, name := range files{
+        j, err := ioutil.ReadFile(name); if err == nil{
+            epgf := &epg.EPGFile{}
+            //log.Println(string(j))
+            json.Unmarshal(j, epgf)
+            //log.Println(epgf.File.ServiceId, epgf.Programs[0])
+            movi.epgfiles[epgf.File.ServiceId] = epgf
+        }
+    }
+
+    if movi.spd != nil && movi.sp != nil && movi.sp != nil && movi.pd != nil && movi.bcg != nil && len(movi.epgfiles) > 0{
+        movi.save = false
+    }
+
+    //log.Println(movi)
+
+    return true
 }
 
 func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
 
     entrypoint := fmt.Sprintf("%s%s", prefix, EntryPointURI)
 
-    movi.FindAreaServiceProvider(getreader(entrypoint)); if movi.sp == nil{
-        log.Fatal("No service provider found for ", movi.DomainName)
+    if movi.sp == nil || movi.spd == nil{
+        movi.FindAreaServiceProvider(getreader(entrypoint)); if movi.sp == nil{
+            log.Fatal("No service provider found for ", movi.DomainName)
+        }
+    }else{
+        log.Println("Service provider files already cached")
     }
 
     log.Printf("Found %d SP offerings for area %s: %s\n", len(movi.sp.Offering), movi.area.String(), movi.sp.Offering)
@@ -46,8 +133,12 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
     offering := movi.sp.Offering[0]
     nexturi := fmt.Sprintf("%s%s", prefix, offering)
 
-    if ok := movi.FindDiscoveryFiles(getreader(nexturi)); !ok{
-        log.Fatal("Some discovery files are missing", nexturi)
+    if movi.bd == nil || movi.pd == nil || movi.bcg == nil{
+        if ok := movi.FindDiscoveryFiles(getreader(nexturi)); !ok{
+            log.Fatal("Some discovery files are missing", nexturi)
+        }
+    }else{
+        log.Println("Discovery files already cached")
     }
 
     // TV-Anytime
@@ -57,21 +148,30 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
     //files := dvbstp.ReadSDSFiles(prefix + 
     //log.Println(files)
     // EPG
-    epguris := movi.bcg.GetEPGAddresses()
-    log.Println(epguris)
-    files := make(map[uint16]*epg.EPGFile)
-    for _, uri := range epguris{
-        log.Println("URI", uri)
-        for k, file := range epg.ReadEPG(getreader(uri)).Files{
-            files[k] = file
+    if len(movi.epgfiles) == 0{
+        epguris := movi.bcg.GetEPGAddresses()
+        log.Println(epguris)
+        movi.epgfiles = make(map[uint16]*epg.EPGFile)
+        for i, uri := range epguris{
+            if i > 2{
+                break
+            }
+            log.Println("URI", uri)
+            for k, file := range epg.ReadEPG(getreader(prefix + uri)).Files{
+                movi.epgfiles[k] = file
+            }
+            //files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)
+            //log.Println(files)
         }
-        //files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)
-        //log.Println(files)
+    }else{
+        log.Println("EPG files already cached")
     }
 
-    log.Println(files)
+    //log.Println(movi.epgfiles)
 
-    log.Printf("%+v\n",movi)
+    movi.SaveCaches()
+
+    //log.Printf("%+v\n",movi)
     return true
 }
 
@@ -140,6 +240,29 @@ func (movi *Movi) ListPackages(){
     }
 }
 
+func (movi *Movi) GetUniqueChannels() []*LogicalChannel{
+
+    channels := make([]*LogicalChannel, 0)
+
+    groups := movi.GetChannelGroups(nil)
+    for _, group := range groups{
+        if len(group.HD) > 0{
+            if len(group.SD) > 0{
+                group.SD[0].Number += 1000
+                channels = append(channels, group.SD[0])
+                if group.HD[0].EPG == nil && group.SD[0].EPG != nil{
+                    group.HD[0].EPG = group.SD[0].EPG
+                }
+            }
+            channels = append(channels, group.HD[0])
+        }else if len(group.SD) > 0{
+                channels = append(channels, group.SD[0])
+        }
+    }
+
+    return channels
+}
+
 func (movi *Movi) GetChannelGroups(packages map[string]string) map[int]*ChannelGroup{
 
     groups := make(map[int]*ChannelGroup)
@@ -189,7 +312,7 @@ func (movi *Movi) GetChannelList(packages map[string]string) []*LogicalChannel{
             }
 
             //log.Println(service, si)
-            channel := NewLogicalChannel(friendlyname, service, si)
+            channel := NewLogicalChannel(friendlyname, service, si, movi.epgfiles[uint16(service.TextualID.ServiceName)])
             //log.Println(channel)
             channels = append(channels, channel)
         }

@@ -5,6 +5,7 @@ import (
     "fmt"
     "strings"
     "time"
+    "epg"
 )
 
 /* SPD SDS */
@@ -238,6 +239,7 @@ type ChannelGroup struct{
 type LogicalChannel struct{
     Name            string
     Number          int
+    Id              int
     HD              bool
     FromPackage     string
     Url             StreamURL
@@ -245,9 +247,10 @@ type LogicalChannel struct{
     Port            int
     Description     string
     Genre           string
+    EPG             *epg.EPGFile
 }
 
-func NewLogicalChannel(packagename string, pkgservice *Service, service *SingleService) *LogicalChannel{
+func NewLogicalChannel(packagename string, pkgservice *Service, service *SingleService, epgfile *epg.EPGFile) *LogicalChannel{
 
     var url StreamURL
 
@@ -269,11 +272,13 @@ func NewLogicalChannel(packagename string, pkgservice *Service, service *SingleS
     return &LogicalChannel{
         Name:           strings.Replace(service.SI.Name, "\n", "", -1),
         Number:         pkgservice.LogicalChannelNumber,
+        Id:             pkgservice.TextualID.ServiceName,
         HD:             service.SI.Name[len(service.SI.Name)-2:] == "HD",
         FromPackage:    packagename,
         Url:            url,
         Description:    service.SI.Description,
         Genre:          service.SI.Genre,
+        EPG:            epgfile,
     }
 }
 
