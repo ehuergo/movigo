@@ -1,16 +1,18 @@
 package movi
 
 import (
-    "encoding/xml"
+    "os"
+    "io"
     "log"
     "fmt"
     "sort"
-    "io"
+    "time"
     "io/ioutil"
+    "path/filepath"
+    "encoding/json"
+    "encoding/xml"
     "movigo/dvbstp"
     "movigo/epg"
-    "encoding/json"
-    "path/filepath"
 )
 
 const (
@@ -26,17 +28,43 @@ type Movi struct{
     pd          *dvbstp.PackageDiscovery
     bcg         *dvbstp.BCGDiscovery
     epgfiles    map[uint16]*epg.EPGFile
+    cachedir    string
+    epgcachedir string
 }
 
-func NewMovi(area Area) *Movi{
+func NewMovi(area Area, cachedays int) *Movi{
     movi := &Movi{}
 
     movi.area = area
     movi.DomainName = fmt.Sprintf("DEM_%d.imagenio.es", area)
 
-    movi.LoadCaches()
+    movi.cachedir = "/tmp/movicache"
+    movi.epgcachedir = "/tmp/movicache/epg"
+
+    cachehours, _ := time.ParseDuration(fmt.Sprintf("%dh", cachedays * 24))
+    expired := movi.getCacheAge().Add(cachehours).Before(time.Now())
+    if !expired{
+        movi.LoadCaches()
+    }
 
     return movi
+}
+
+func (movi *Movi) getCacheAge() time.Time{
+    d, err := os.Open(movi.cachedir); if err != nil{
+        if os.IsNotExist(err){
+            os.MkdirAll(movi.epgcachedir, 0755)
+            log.Println("Created cache directories", movi.epgcachedir)
+            return time.Now().Add(-1 * 30  * 24 * time.Hour) //Old enough to force cache save
+        }
+        log.Println(err)
+    }
+
+    di, err := d.Stat(); if err != nil{
+        log.Println(err)
+    }
+
+    return di.ModTime()
 }
 
 func (movi *Movi) SaveCaches(){
@@ -86,13 +114,14 @@ func (movi *Movi) LoadCaches(){
     //log.Println(movi)
 }
 
-func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
+func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string, scandays int) bool{
 
     entrypoint := fmt.Sprintf("%s%s", prefix, EntryPointURI)
 
     if movi.sp == nil || movi.spd == nil{
         movi.FindAreaServiceProvider(getreader(entrypoint)); if movi.sp == nil{
-            log.Fatal("No service provider found for ", movi.DomainName)
+            log.Println("No service provider found for ", movi.DomainName)
+            return false
         }
     }else{
         log.Println("Service provider files already cached")
@@ -105,7 +134,8 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
 
     if movi.bd == nil || movi.pd == nil || movi.bcg == nil{
         if ok := movi.FindDiscoveryFiles(getreader(nexturi)); !ok{
-            log.Fatal("Some discovery files are missing", nexturi)
+            log.Println("Some discovery files are missing", nexturi)
+            return false
         }
     }else{
         log.Println("Discovery files already cached")
@@ -117,7 +147,7 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
         log.Println(epguris)
         movi.epgfiles = make(map[uint16]*epg.EPGFile)
         for i, uri := range epguris{
-            if i > 2{
+            if i > scandays{
                 break
             }
             log.Println("URI", uri)

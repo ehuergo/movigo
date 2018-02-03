@@ -85,8 +85,8 @@ func main(){
     }
     //else keep untouched
 
-    m := movi.NewMovi(area)
-    ok := m.Scan(GetReader, fromprefix); if !ok{
+    m := movi.NewMovi(area, opts.cachedays)
+    ok := m.Scan(GetReader, fromprefix, 3); if !ok{
         log.Fatal("Something went wrong scanning %s", area)
     }
 
@@ -110,7 +110,6 @@ func main(){
     if opts.savem3u.Raw != ""{
 
         channels := m.GetChannelList(nil, true, 1000)
-        log.Println(channels)
         data := output.DumpIPTVSimple(channels, streamprefix)
         m3uwriter.Write(data)
         log.Printf("Channels written to %+v %s", m3uwriter, opts.savem3u)
