@@ -5,10 +5,10 @@ import (
     "log"
     "fmt"
     "sort"
-    "dvbstp"
     "io"
     "io/ioutil"
-    "epg"
+    "movigo/dvbstp"
+    "movigo/epg"
     "encoding/json"
     "path/filepath"
 )
@@ -121,7 +121,7 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string) bool{
                 break
             }
             log.Println("URI", uri)
-            for k, file := range epg.ReadEPG(getreader(prefix + uri)).Files{
+            for k, file := range epg.ReadMulticastEPG(getreader(prefix + uri)).Files{
                 movi.epgfiles[k] = file
             }
             //files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)

@@ -3,7 +3,6 @@ package epg
 // All credits to: https://github.com/MovistarTV/tv_grab_es_movistartv/blob/master/tv_grab_es_movistartv.py#L610
 
 import (
-//    "fmt"
     "time"
     "encoding/binary"
     "encoding/json"

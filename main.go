@@ -7,7 +7,7 @@ import (
     //"flag"
     "io"
     "os"
-    "readers"
+    "movigo/readers"
     //"net/url"
     //"github.com/alexflint/go-arg"
 )

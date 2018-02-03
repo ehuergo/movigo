@@ -5,7 +5,7 @@ import (
     "fmt"
     "strings"
     "time"
-    "epg"
+    "movigo/epg"
 )
 
 /* SPD SDS */

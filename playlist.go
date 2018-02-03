@@ -4,7 +4,7 @@ import (
     "fmt"
     "log"
     "sort"
-    "epg"
+    "movigo/epg"
     "encoding/xml"
 )
 
