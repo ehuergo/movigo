@@ -79,9 +79,9 @@ func main(){
     }
 
     //streamacceess
-    streamprefix := opts.streamaccess.Raw
-    if opts.streamaccess.Scheme == "udpxy"{
-        streamprefix = fmt.Sprintf("http://%s/udp/", opts.streamaccess.Host)
+    streamprefix := opts.streamprefix.Raw
+    if opts.streamprefix.Scheme == "udpxy"{
+        streamprefix = fmt.Sprintf("http://%s/udp/", opts.streamprefix.Host)
     }
     //else keep untouched
 
