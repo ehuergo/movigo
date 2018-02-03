@@ -94,14 +94,16 @@ func main(){
     }
 
     if opts.savem3u.Raw != ""{
-        channels := movi.GetUniqueChannels()
+
+        channels := movi.GetChannelList(nil, true, 1000)
+        log.Println(channels)
         data := DumpIPTVSimple(channels, streamprefix)
         m3uwriter.Write(data)
         log.Printf("Channels written to %+v %s", m3uwriter, opts.savem3u)
     }
 
     if opts.savexmltv.Raw != ""{
-        channels := movi.GetUniqueChannels()
+        channels := movi.GetChannelList(nil, true, 1000)
         data := dumpXMLTVEPG(channels)
         xmltvwriter.Write(data)
         log.Printf("XMLTV written to %+v %s", xmltvwriter, opts.savexmltv)

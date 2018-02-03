@@ -226,7 +226,7 @@ func (movi *Movi) GetChannelGroups(packages map[string]string) map[int]*ChannelG
 
     groups := make(map[int]*ChannelGroup)
 
-    channels := movi.GetChannelList(packages, false)
+    channels := movi.GetChannelList(packages, false, 1000)
 
     for _, channel := range channels{
         group, ok := groups[channel.Number]; if !ok{
@@ -249,12 +249,11 @@ func (movi *Movi) GetChannelGroups(packages map[string]string) map[int]*ChannelG
 }
 
 // Get all available channels in the specified packages, or from any package if nil
-func (movi *Movi) GetChannelList(packages map[string]string, unique bool) []*LogicalChannel{
+// If unique == true then try to skip duplicate channels
+// If SDoffset > 0 then allow duplicate HD and SD channels, but move the SDs to Number+SDoffset 
+func (movi *Movi) GetChannelList(packages map[string]string, unique bool, SDoffset int) []*LogicalChannel{
 
     channelmap := make(map[int]*LogicalChannel)
-
-    //doneids := make(map[int]bool) //true if hd
-    //donenums := make(map[int]bool) // true if hd
 
     for _, pkg := range movi.pd.PackageList{
 
@@ -282,7 +281,11 @@ func (movi *Movi) GetChannelList(packages map[string]string, unique bool) []*Log
                         continue
                     }else{
                         if channel.HD{
-                            channelmap[channel.Number] = channel // overwrite with HD
+                            if SDoffset > 0{
+                                channelmap[channel.Number + SDoffset] = channelmap[channel.Number]
+                                channelmap[channel.Number + SDoffset].Number += SDoffset
+                            }
+                            channelmap[channel.Number] = channel
                         }
                     }
                 }
@@ -292,7 +295,7 @@ func (movi *Movi) GetChannelList(packages map[string]string, unique bool) []*Log
         }
     }
     channels := make([]*LogicalChannel, 0)
-    for num, _ := range channels{
+    for num, _ := range channelmap{
         channels = append(channels, channelmap[num])
     }
 
