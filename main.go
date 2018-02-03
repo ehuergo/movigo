@@ -8,6 +8,7 @@ import (
     "io"
     "os"
     "movigo/readers"
+    "movigo/movi"
     //"net/url"
     //"github.com/alexflint/go-arg"
 )
@@ -30,7 +31,7 @@ func main(){
     //    "UTX64": "Extra",
     //}
 
-    area := Area(opts.area)
+    area := movi.Area(opts.area)
 
     //areadfrom
     fromprefix := opts.readfrom.Raw
@@ -83,13 +84,13 @@ func main(){
     }
     //else keep untouched
 
-    movi := NewMovi(area)
-    ok := movi.Scan(GetReader, fromprefix); if !ok{
+    m := movi.NewMovi(area)
+    ok := m.Scan(GetReader, fromprefix); if !ok{
         log.Fatal("Something went wrong scanning %s", area)
     }
 
     if opts.listpackages{
-        packages := movi.GetPackages()
+        packages := m.GetPackages()
         for name, channels := range packages{
             log.Printf("\n-> Package: %s Channels %d\n", name, len(channels))
             for _, channel := range channels{
@@ -99,7 +100,7 @@ func main(){
     }
 
     if opts.listchannels{
-        channels := movi.GetChannelList(nil, true, 1000)
+        channels := m.GetChannelList(nil, true, 1000)
         for _, channel := range channels{
             printChannel(channel)
         }
@@ -107,7 +108,7 @@ func main(){
 
     if opts.savem3u.Raw != ""{
 
-        channels := movi.GetChannelList(nil, true, 1000)
+        channels := m.GetChannelList(nil, true, 1000)
         log.Println(channels)
         data := DumpIPTVSimple(channels, streamprefix)
         m3uwriter.Write(data)
@@ -115,7 +116,7 @@ func main(){
     }
 
     if opts.savexmltv.Raw != ""{
-        channels := movi.GetChannelList(nil, true, 1000)
+        channels := m.GetChannelList(nil, true, 1000)
         data := dumpXMLTVEPG(channels)
         xmltvwriter.Write(data)
         log.Printf("XMLTV written to %+v %s", xmltvwriter, opts.savexmltv)
@@ -123,7 +124,7 @@ func main(){
 }
 
 
-func printChannel(channel *LogicalChannel){
+func printChannel(channel *movi.LogicalChannel){
     hasepg := channel.EPG != nil
     log.Printf("% 5d (% 5d) % -28s %t\n", channel.Number, channel.Id, channel.Name, hasepg)
 }

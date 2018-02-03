@@ -1,4 +1,4 @@
-package main
+package movi
 
 import (
     "encoding/xml"
@@ -20,11 +20,11 @@ const (
 type Movi struct{
     area        Area
     DomainName  string
-    spd         *ServiceProviderDiscovery
-    sp          *ServiceProvider
-    bd          *BroadcastDiscovery
-    pd          *PackageDiscovery
-    bcg         *BCGDiscovery
+    spd         *dvbstp.ServiceProviderDiscovery
+    sp          *dvbstp.ServiceProvider
+    bd          *dvbstp.BroadcastDiscovery
+    pd          *dvbstp.PackageDiscovery
+    bcg         *dvbstp.BCGDiscovery
     epgfiles    map[uint16]*epg.EPGFile
 }
 
@@ -142,7 +142,7 @@ func (movi *Movi) FindAreaServiceProvider(r io.Reader){
 
     //log.Println(string(spd_raw))
 
-    sd := &ServiceDiscovery{}
+    sd := &dvbstp.ServiceDiscovery{}
     xml.Unmarshal(spd_raw, sd)
     movi.spd = &sd.ServiceProviderDiscovery
 
@@ -161,7 +161,7 @@ func (movi *Movi) FindDiscoveryFiles(r io.Reader) bool{
 
     for _, file := range files{
         //log.Println(string(file))
-        disco := &ServiceDiscovery{}
+        disco := &dvbstp.ServiceDiscovery{}
         err := xml.Unmarshal(file, disco); if err != nil{
             log.Println(err)
         }

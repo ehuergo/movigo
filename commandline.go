@@ -3,6 +3,7 @@ package main
 import (
     "flag"
     "net/url"
+    "movigo/movi"
 )
 
 type Opts struct{
@@ -47,7 +48,7 @@ func parseCommandLine() *Opts{
     flag.Var(&opts.savem3u, "savem3u", "stdout Dumps the file to stdout. Otherwise it's considered a path in the filesystem. Defaults to stdout")
     flag.Var(&opts.savexmltv, "savexmltv", "stdout Dumps the file to stdout. Otherwise it's considered a path in the filesystem. Defaults to stdout")
     flag.Var(&opts.streamaccess, "streamaccess", "udpxy://IP:PORT, udp:// or rtp://")
-    flag.IntVar(&opts.area, "area", int(MADRID), "Area code")
+    flag.IntVar(&opts.area, "area", int(movi.MADRID), "Area code")
     flag.IntVar(&opts.cachedays, "cachedays", 1, "Ignore cache if older than N days (default: 1)")
     flag.BoolVar(&opts.listpackages, "packages", false, "")
     flag.BoolVar(&opts.listchannels, "channels", false, "")

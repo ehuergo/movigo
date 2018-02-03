@@ -1,4 +1,4 @@
-package main
+package movi
 
 type Area uint8
 

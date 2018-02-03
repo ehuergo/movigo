@@ -5,10 +5,11 @@ import (
     "log"
     "sort"
     "movigo/epg"
+    "movigo/movi"
     "encoding/xml"
 )
 
-func DumpGroupsAsIPTVSimple(groups map[int]*ChannelGroup, prefix string) []byte{
+func DumpGroupsAsIPTVSimple(groups map[int]*movi.ChannelGroup, prefix string) []byte{
     var keys []int
     data := []byte("#EXTM3U\n")
 
@@ -31,7 +32,7 @@ func DumpGroupsAsIPTVSimple(groups map[int]*ChannelGroup, prefix string) []byte{
     return data
 }
 
-func dumpIPTVSimpleChannel(c *LogicalChannel, prefix string) []byte{
+func dumpIPTVSimpleChannel(c *movi.LogicalChannel, prefix string) []byte{
 
     extinf := fmt.Sprintf("#EXTINF:-1 tvg-chid=\"%d\" tvg-logo=\"%s\" tvg-chno=\"%d\" group-title=\"%s\", %s\n",
         c.Id,
@@ -45,7 +46,7 @@ func dumpIPTVSimpleChannel(c *LogicalChannel, prefix string) []byte{
     return append([]byte(extinf), []byte(url)...)
 }
 
-func dumpXMLTVEPG(channels []*LogicalChannel) []byte{
+func dumpXMLTVEPG(channels []*movi.LogicalChannel) []byte{
     xmltvf := epg.NewXMLTVFile()
     //xmltvf.XMLName.Local = "tv"
     for _, channel := range channels{
@@ -71,7 +72,7 @@ func dumpXMLTVEPG(channels []*LogicalChannel) []byte{
     return xmltvdata
 }
 
-func DumpIPTVSimple(channels []*LogicalChannel, prefix string) []byte{
+func DumpIPTVSimple(channels []*movi.LogicalChannel, prefix string) []byte{
 
     data := []byte("#EXTM3U\n")
 
