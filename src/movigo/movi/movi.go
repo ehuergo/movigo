@@ -293,6 +293,7 @@ func (movi *Movi) GetChannelList(packages map[string]string, unique bool, SDoffs
 
             if unique{
                 c, found := channelmap[channel.Number]; if found{
+                copyEPG(c, channel)
 
                     if c.HD{
                         continue
@@ -321,6 +322,13 @@ func (movi *Movi) GetChannelList(packages map[string]string, unique bool, SDoffs
     return channels
 }
 
+func copyEPG(c1, c2 *LogicalChannel){
+    if c1.EPG == nil && c2.EPG != nil{
+        c1.EPG = c2.EPG
+    }else if c1.EPG != nil && c2.EPG == nil{
+        c2.EPG = c1.EPG
+    }
+}
 
 func saveJSON(path string, i interface{}) error{
     j, err := json.Marshal(i); if err != nil{
