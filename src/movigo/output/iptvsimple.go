@@ -32,8 +32,9 @@ func DumpGroupsAsIPTVSimple(groups map[int]*movi.ChannelGroup, prefix string) []
 
 func dumpIPTVSimpleChannel(c *movi.LogicalChannel, prefix string) []byte{
 
-    extinf := fmt.Sprintf("#EXTINF:-1 tvg-chid=\"%d\" tvg-logo=\"%s\" tvg-chno=\"%d\" group-title=\"%s\", %s\n",
+    extinf := fmt.Sprintf("#EXTINF:-1 tvg-id=\"%d\" tvg-name=\"%s\" tvg-logo=\"%s\" tvg-chno=\"%d\" group-title=\"%s\", %s\n",
         c.Id,
+        c.Name,
         c.GetLogoPath(),
         c.Number,
         c.FromPackage,
