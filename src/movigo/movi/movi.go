@@ -69,39 +69,39 @@ func (movi *Movi) getCacheAge() time.Time{
 
 func (movi *Movi) SaveCaches(){
 
-    saveJSON("cache/spd.json", movi.spd)
-    saveJSON("cache/sp.json", movi.sp)
-    saveJSON("cache/bd.json", movi.bd)
-    saveJSON("cache/pd.json", movi.pd)
-    saveJSON("cache/bcg.json", movi.bcg)
-    saveJSON("cache/bd.json", movi.bd)
+    saveJSON(movi.cachedir + "/spd.json", movi.spd)
+    saveJSON(movi.cachedir + "/sp.json", movi.sp)
+    saveJSON(movi.cachedir + "/bd.json", movi.bd)
+    saveJSON(movi.cachedir + "/pd.json", movi.pd)
+    saveJSON(movi.cachedir + "/bcg.json", movi.bcg)
+    saveJSON(movi.cachedir + "/bd.json", movi.bd)
 
     for _, file := range movi.epgfiles{
-        saveJSON("cache/epg/" + file.File.ServiceURL + ".json", file)
+        saveJSON(movi.epgcachedir + "/" + file.File.ServiceURL + ".json", file)
     }
 }
 
 func (movi *Movi) LoadCaches(){
 
-    if err := loadJSON("cache/spd.json", &movi.spd); err != nil{
+    if err := loadJSON(movi.cachedir + "/spd.json", &movi.spd); err != nil{
         log.Println(err)
     }
-    if err := loadJSON("cache/sp.json", &movi.sp); err != nil{
+    if err := loadJSON(movi.cachedir + "/sp.json", &movi.sp); err != nil{
         log.Println(err)
     }
-    if err := loadJSON("cache/bd.json", &movi.bd); err != nil{
+    if err := loadJSON(movi.cachedir + "/bd.json", &movi.bd); err != nil{
         log.Println(err)
     }
-    if err := loadJSON("cache/pd.json", &movi.pd); err != nil{
+    if err := loadJSON(movi.cachedir + "/pd.json", &movi.pd); err != nil{
         log.Println(err)
     }
-    if err := loadJSON("cache/bcg.json", &movi.bcg); err != nil{
+    if err := loadJSON(movi.cachedir + "/bcg.json", &movi.bcg); err != nil{
         log.Println(err)
     }
 
     movi.epgfiles = make(map[uint16]*epg.EPGFile)
 
-    files, _ := filepath.Glob("cache/epg/*.json")
+    files, _ := filepath.Glob(movi.epgcachedir + "/*.json")
     for _, name := range files{
         epgf := &epg.EPGFile{}
         if err := loadJSON(name, epgf); err != nil{
