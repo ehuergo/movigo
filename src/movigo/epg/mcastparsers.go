@@ -3,7 +3,9 @@ package epg
 // All credits to: https://github.com/MovistarTV/tv_grab_es_movistartv/blob/master/tv_grab_es_movistartv.py#L610
 
 import (
+    "fmt"
     "time"
+    "regexp"
     "encoding/binary"
     "encoding/json"
 )
@@ -147,7 +149,7 @@ func ParsePrograms(data []byte) []*Program{
 
         if prog.IsSerie{
             soff := 0
-            prog.Serie, soff = ParseSerie(data[off+1:], off+1)
+            prog.Serie, soff = ParseSerie(prog.Title, data[off+1:], off+1)
 
             off += soff
         }
@@ -166,10 +168,36 @@ type Serie struct{
     Season          uint8
     Title           string
     TitleEnd        uint8
+
+    *ParsedSerie
 }
 
-func ParseSerie(data []byte, off int) (Serie, int){
+type ParsedSerie struct{
+    ParsedName      string
+    ParsedTitle     string
+    ParsedSeason    string
+    ParsedEpisode   string
+}
+
+func decodeSerieTitle(title string) *ParsedSerie{
+    r := regexp.MustCompile(`^(.*) T([^ ]).*Ep. ([^ ]) ?-? ?(.*)$`)
+    x := r.FindStringSubmatch(title)
+
+    if len(x) < 4{ return nil }
+
+    s := &ParsedSerie{}
+
+    s.ParsedName = x[1]
+    s.ParsedSeason = x[2]
+    s.ParsedEpisode = x[3]
+    s.ParsedTitle = x[4]
+
+    return s
+}
+
+func ParseSerie(progtitle string, data []byte, off int) (Serie, int){
     serie := Serie{}
+    serie.ParsedSerie = decodeSerieTitle(progtitle)
     //fmt.Println("SERIEDATA", data[:16])
     title_end := int(data[11] + 13)
     serie.SerieId = Uint16(data[4:6])
@@ -177,6 +205,7 @@ func ParseSerie(data []byte, off int) (Serie, int){
     serie.Year = Uint16(data[8:10])
     serie.Season = data[10]
     //serie.Title = decodetitle(data[12:title_end - off])
+    fmt.Printf("%s %+v\n", progtitle, serie.ParsedSerie)
     return serie, title_end
 }
 
