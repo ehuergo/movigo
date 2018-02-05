@@ -128,6 +128,10 @@ func (p *Program) UnmarshalJSON(data []byte) error{
     return nil
 }
 
+func (p *Program) String() string{
+    return fmt.Sprintf("%s % 9s / %s / %d %d", p.Start, p.Duration, p.Title, p.Year, p.SerieId)
+}
+
 func ParsePrograms(data []byte) []*Program{
     progs := make([]*Program, 0)
     off := 0
@@ -181,8 +185,9 @@ type ParsedSerie struct{
 }
 
 func decodeSerieTitle(title string) *ParsedSerie{
-    r := regexp.MustCompile(`^(.*) T([^ ]).*Ep. ([^ ]) ?-? ?(.*)$`)
+    r := regexp.MustCompile(`^(.*) T([^ ]*) Ep. ([^ ]*) ?-? ?(.*)$`)
     x := r.FindStringSubmatch(title)
+    //fmt.Println(x[1:])
 
     if len(x) < 4{ return nil }
 
