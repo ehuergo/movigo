@@ -7,5 +7,6 @@ Functionality implemented:
 * Generate IPTVSimple compatible m3u playlist
 * Generate XMLTV guide
 * List channels and packages
+* Search EPG content
 
 Things might now always work in 'master'. Check tags for stable functionality
