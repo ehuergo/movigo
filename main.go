@@ -57,7 +57,7 @@ func main(){
 
     if opts.savem3u.Raw == "stdout"{
         m3uwriter = os.Stdout
-    }else if opts.savem3u.Raw != ""{ 
+    }else if opts.savem3u.Raw != ""{
         m3uwriter, err = os.OpenFile(opts.savem3u.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
             log.Fatal(err)
         }
@@ -70,7 +70,7 @@ func main(){
 
     if opts.savexmltv.Raw == "stdout"{
         xmltvwriter = os.Stdout
-    }else if opts.savexmltv.Raw != ""{ 
+    }else if opts.savexmltv.Raw != ""{
         xmltvwriter, err = os.OpenFile(opts.savexmltv.Raw, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0777); if err != nil{
             log.Fatal(err)
         }
@@ -88,6 +88,16 @@ func main(){
     m := movi.NewMovi(area, opts.cachedays)
     ok := m.Scan(GetReader, fromprefix, 0); if !ok{
         log.Fatal("Something went wrong scanning %s", area)
+    }
+
+    if opts.searchepg != ""{
+        programs := m.FindProgram(opts.searchepg, opts.season, opts.episode, opts.title, true)
+        for _, program := range programs{
+            log.Println(program, program.ParsedSerie.ParsedName,
+                "|", program.ParsedSerie.ParsedSeason,
+                "|", program.ParsedSerie.ParsedEpisode,
+                "|", program.ParsedSerie.ParsedTitle)
+        }
     }
 
     if opts.listpackages{

@@ -23,6 +23,10 @@ type Opts struct{
     cachedays       int
     listpackages    bool
     listchannels    bool
+    searchepg       string
+    season          string
+    episode         string
+    title           string
     verbose         bool
 }
 
@@ -53,6 +57,10 @@ func parseCommandLine() *Opts{
     flag.BoolVar(&opts.listpackages, "packages", false, "")
     flag.BoolVar(&opts.listchannels, "channels", false, "")
     flag.BoolVar(&opts.verbose, "v", false, "")
+    flag.StringVar(&opts.searchepg, "searchepg", "", "Search a program")
+    flag.StringVar(&opts.season, "season", "", "filter season for -searchepg")
+    flag.StringVar(&opts.episode, "episode", "", "filter episode for -searchepg")
+    flag.StringVar(&opts.title, "title", "", "filter title for -searchepg")
 
     //opts.savem3u.Raw = "stdout"
 

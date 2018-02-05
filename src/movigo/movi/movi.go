@@ -13,6 +13,8 @@ import (
     "encoding/xml"
     "movigo/dvbstp"
     "movigo/epg"
+    "golang.org/x/text/search"
+    "golang.org/x/text/language"
 )
 
 const (
@@ -320,6 +322,62 @@ func (movi *Movi) GetChannelList(packages map[string]string, unique bool, SDoffs
     sort.Slice(channels, func(i, j int) bool { return channels[i].Number < channels[j].Number })
 
     return channels
+}
+
+
+func (movi *Movi) FindProgram(name string, season string, episode string, title string, exact bool) []*epg.Program{
+
+    matches := make([]*epg.Program, 0)
+
+    if name + season + episode + title == ""{
+        return matches
+    }
+
+    searcher := search.New(language.Spanish, search.IgnoreCase, search.IgnoreDiacritics) //, search.WholeWord)
+
+    for _, file := range movi.epgfiles{
+        for _, program := range file.Programs{
+            if name != ""{
+                s := program.Title
+                if program.IsSerie && program.ParsedSerie != nil{
+                    if program.ParsedSerie.ParsedName  != ""{
+                        s = program.ParsedSerie.ParsedName
+                    }
+                }
+                //log.Println(program, program.ParsedSerie, s, name)
+                start, end := searcher.IndexString(s, name)
+                //log.Println("S IS ", s, start, end)
+                if start == -1{
+                    continue
+                }else if exact{
+                    if start > 2 || end < len(s) - 2{
+                        continue
+                    }
+                }
+            }
+            if program.ParsedSerie == nil{
+                continue
+            }
+
+            if season != "" && season != program.ParsedSeason{
+                continue
+            }
+            if episode != "" && episode != program.ParsedEpisode{
+                continue
+            }
+
+            if title != ""{
+                start, _ := searcher.IndexString(program.Title, name)
+                if start == -1{
+                    continue
+                }
+            }
+
+            matches = append(matches, program)
+        }
+    }
+
+    return matches
 }
 
 func copyEPG(c1, c2 *LogicalChannel){
