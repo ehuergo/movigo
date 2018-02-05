@@ -86,7 +86,7 @@ func main(){
     //else keep untouched
 
     m := movi.NewMovi(area, opts.cachedays)
-    ok := m.Scan(GetReader, fromprefix, 3); if !ok{
+    ok := m.Scan(GetReader, fromprefix, 0); if !ok{
         log.Fatal("Something went wrong scanning %s", area)
     }
 

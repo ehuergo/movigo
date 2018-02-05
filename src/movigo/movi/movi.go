@@ -147,7 +147,7 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string, scandays 
         log.Println(epguris)
         movi.epgfiles = make(map[uint16]*epg.EPGFile)
         for i, uri := range epguris{
-            if i > scandays{
+            if scandays > 0 && i > scandays{
                 break
             }
             log.Println("URI", uri)

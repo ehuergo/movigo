@@ -132,7 +132,8 @@ func ParsePrograms(data []byte) []*Program{
     progs := make([]*Program, 0)
     off := 0
     //log.Println(data)
-    for off + 96 < len(data){
+    for off + 108 < len(data){
+    //for off > 31 && off + int(data[31]) + 33 < len(data){
         //log.Println(data[off:off+24])
         prog := &Program{}
         prog.Pid = Uint32(data[off:off+4])
@@ -205,7 +206,7 @@ func ParseSerie(progtitle string, data []byte, off int) (Serie, int){
     serie.Year = Uint16(data[8:10])
     serie.Season = data[10]
     //serie.Title = decodetitle(data[12:title_end - off])
-    fmt.Printf("%s %+v\n", progtitle, serie.ParsedSerie)
+    fmt.Printf("%s %+v %+v\n", progtitle, serie.ParsedSerie, serie)
     return serie, title_end
 }
 
