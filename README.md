@@ -9,4 +9,4 @@ Functionality implemented:
 * List channels and packages
 * Search EPG content
 
-Things might now always work in 'master'. Check tags for stable functionality
+Things might not always work in 'master'. Check tags for stable functionality
