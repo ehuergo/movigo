@@ -21,6 +21,10 @@ const (
     EntryPointURI = "239.0.2.129:3937"
 )
 
+var (
+    getreader   func(string) io.Reader
+)
+
 type Movi struct{
     area        Area
     DomainName  string
@@ -113,14 +117,18 @@ func (movi *Movi) LoadCaches(){
         movi.epgfiles[epgf.File.ServiceId] = epgf
     }
 
+    log.Println("Caches loaded")
+
     //log.Println(movi)
 }
 
-func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string, scandays int) bool{
+func(movi *Movi) Scan(gr func(string) io.Reader, prefix string, scandays int, force bool) bool{
+
+    getreader = gr
 
     entrypoint := fmt.Sprintf("%s%s", prefix, EntryPointURI)
 
-    if movi.sp == nil || movi.spd == nil{
+    if force || movi.sp == nil || movi.spd == nil{
         movi.FindAreaServiceProvider(getreader(entrypoint)); if movi.sp == nil{
             log.Println("No service provider found for ", movi.DomainName)
             return false
@@ -134,7 +142,7 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string, scandays 
     offering := movi.sp.Offering[0]
     nexturi := fmt.Sprintf("%s%s", prefix, offering)
 
-    if movi.bd == nil || movi.pd == nil || movi.bcg == nil{
+    if force || movi.bd == nil || movi.pd == nil || movi.bcg == nil{
         if ok := movi.FindDiscoveryFiles(getreader(nexturi)); !ok{
             log.Println("Some discovery files are missing", nexturi)
             return false
@@ -144,27 +152,8 @@ func(movi *Movi) Scan(getreader func(string) io.Reader, prefix string, scandays 
     }
 
     // EPG
-    if len(movi.epgfiles) == 0{
-        epguris := movi.bcg.GetEPGAddresses()
-        log.Println(epguris)
-        movi.epgfiles = make(map[uint16]*epg.EPGFile)
-        for i, uri := range epguris{
-            if scandays > 0 && i > scandays{
-                break
-            }
-            log.Println("URI", uri)
-            for k, file := range epg.ReadMulticastEPG(getreader(prefix + uri)).Files{
-                _, exists := movi.epgfiles[k]; if exists{
-                    for _, program := range file.Programs{
-                        movi.epgfiles[k].Programs = append(movi.epgfiles[k].Programs, program)
-                    }
-                }else{
-                    movi.epgfiles[k] = file
-                }
-            }
-            //files := dvbstp.ReadSDSFiles(getreader(prefix + uri), 1)
-            //log.Println(files)
-        }
+    if force || len(movi.epgfiles) == 0{
+        movi.ReadEPG(scandays, prefix)
     }else{
         log.Println("EPG files already cached")
     }
@@ -221,6 +210,32 @@ func (movi *Movi) FindDiscoveryFiles(r io.Reader) bool{
     }
 
     return true
+}
+
+func (movi *Movi) ReadEPG(scandays int, prefix string){
+    movi.epgfiles = make(map[uint16]*epg.EPGFile)
+    epguris := movi.bcg.GetEPGAddresses()
+    log.Println(epguris)
+    movi.epgfiles = make(map[uint16]*epg.EPGFile)
+    for i, uri := range epguris{
+        if scandays > 0 && i > scandays{
+            break
+        }
+        log.Println("URI", uri)
+        movi.ReadEPGFile(getreader(prefix + uri))
+    }
+}
+
+func (movi *Movi) ReadEPGFile(r io.Reader){
+    for k, file := range epg.ReadMulticastEPG(r).Files{
+        _, exists := movi.epgfiles[k]; if exists{
+            for _, program := range file.Programs{
+                movi.epgfiles[k].Programs = append(movi.epgfiles[k].Programs, program)
+            }
+        }else{
+            movi.epgfiles[k] = file
+        }
+    }
 }
 
 
@@ -325,9 +340,61 @@ func (movi *Movi) GetChannelList(packages map[string]string, unique bool, SDoffs
 }
 
 
-func (movi *Movi) FindProgram(name string, season string, episode string, title string, exact bool) []*epg.Program{
+func (movi *Movi) programMatches(searcher *search.Matcher, program *epg.Program, name string, season string, episode string, title string, exact bool) bool{
+    if name != ""{
+        s := program.Title
+        if program.IsSerie && program.ParsedSerie != nil{
+            if program.ParsedSerie.ParsedName  != ""{
+                s = program.ParsedSerie.ParsedName
+            }
+        }
+        //log.Println(program, program.ParsedSerie)
+        start, end := searcher.IndexString(s, name)
+        //log.Println("S IS", s, start, end)
+        if start == -1{
+            return false
+        }else if exact{
+            if start > 4 || end < len(s) - 2{
+                return false
+            }
+        }
+    }
+    if program.ParsedSerie == nil{
+        return true
+    }
 
-    matches := make([]*epg.Program, 0)
+    if season != "" && season != program.ParsedSeason{
+        return false
+    }
+    if episode != "" && episode != program.ParsedEpisode{
+        return false
+    }
+
+    if title != ""{
+        start, _ := searcher.IndexString(program.Title, name)
+        if start == -1{
+            return false
+        }
+    }
+
+    return true
+}
+
+func (movi *Movi) FindCurrent() map[string]*epg.Program{
+
+    programs := make(map[string]*epg.Program, 0)
+
+    channels := movi.GetChannelList(nil, true, 1000)
+    for _, channel := range channels{
+        programs[channel.Name] = channel.EPGNow()
+    }
+
+    return programs
+}
+
+func (movi *Movi) FindProgram(name string, season string, episode string, title string, exact bool) map[string][]*epg.Program{
+
+    matches := make(map[string][]*epg.Program, 0)
 
     if name + season + episode + title == ""{
         return matches
@@ -335,46 +402,22 @@ func (movi *Movi) FindProgram(name string, season string, episode string, title 
 
     searcher := search.New(language.Spanish, search.IgnoreCase, search.IgnoreDiacritics) //, search.WholeWord)
 
-    for _, file := range movi.epgfiles{
-        for _, program := range file.Programs{
-            if name != ""{
-                s := program.Title
-                if program.IsSerie && program.ParsedSerie != nil{
-                    if program.ParsedSerie.ParsedName  != ""{
-                        s = program.ParsedSerie.ParsedName
-                    }
-                }
-                //log.Println(program, program.ParsedSerie, s, name)
-                start, end := searcher.IndexString(s, name)
-                //log.Println("S IS ", s, start, end)
-                if start == -1{
-                    continue
-                }else if exact{
-                    if start > 2 || end < len(s) - 2{
-                        continue
-                    }
-                }
-            }
-            if program.ParsedSerie == nil{
-                continue
-            }
-
-            if season != "" && season != program.ParsedSeason{
-                continue
-            }
-            if episode != "" && episode != program.ParsedEpisode{
-                continue
-            }
-
-            if title != ""{
-                start, _ := searcher.IndexString(program.Title, name)
-                if start == -1{
-                    continue
-                }
-            }
-
-            matches = append(matches, program)
+    channels := movi.GetChannelList(nil, true, 1000)
+    for _, channel := range channels{
+        if channel.EPG == nil{
+            continue
         }
+        //log.Println(channel.Name)
+
+        for _, program := range channel.EPG.Programs{
+            if movi.programMatches(searcher, program, name, season, episode, title, exact){
+                _, ok := matches[channel.Name]; if !ok{
+                    matches[channel.Name] = make([]*epg.Program, 0)
+                }
+                matches[channel.Name] = append(matches[channel.Name], program)
+            }
+        }
+
     }
 
     return matches

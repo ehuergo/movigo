@@ -28,6 +28,9 @@ type Opts struct{
     episode         string
     title           string
     verbose         bool
+    now             bool
+
+    proxy           string
 }
 
 type URL struct{
@@ -61,6 +64,8 @@ func parseCommandLine() *Opts{
     flag.StringVar(&opts.season, "season", "", "filter season for -searchepg")
     flag.StringVar(&opts.episode, "episode", "", "filter episode for -searchepg")
     flag.StringVar(&opts.title, "title", "", "filter title for -searchepg")
+    flag.BoolVar(&opts.now, "now", false, "Currently on air")
+    flag.StringVar(&opts.proxy, "proxy", "", "Enable RTP proxy")
 
     //opts.savem3u.Raw = "stdout"
 

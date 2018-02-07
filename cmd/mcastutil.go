@@ -18,8 +18,13 @@ import (
 )
 
 var bar *pb.ProgressBar
+var barenabled bool
+var timeout time.Duration
 
 func newbar(size int){
+
+    if !barenabled{ return}
+
     if bar != nil{
         bar.Finish()
     }
@@ -31,12 +36,18 @@ func newbar(size int){
 }
 
 func endbar(){
+
+    if !barenabled{ return}
+
     if bar != nil{
         bar.Finish()
     }
     //log.Println("BAR FINISH")
 }
 func writebar(b []byte){
+
+    if !barenabled{ return}
+
     if bar != nil{
         bar.Write(b)
     }
@@ -54,16 +65,17 @@ func dumpraw(addrinfo string, limit int, w io.WriteCloser){
     tot := 0
     newbar(limit)
     for {
-        if limit > 0 && tot < limit{
+        if limit > 0 && tot > limit{
             break
         }
         data := make([]byte, 1500)
-        r.SetReadDeadline(time.Now().Add(1000 * time.Millisecond))
-        n, err := r.Read(data); if err != nil{
+        r.SetReadDeadline(time.Now().Add(timeout * time.Second))
+        n, addr, err := r.ReadFromUDP(data); if err != nil{
             endbar()
             log.Println("Error reading from", addrinfo, err)
             return
         }
+        log.Println(addr, addrinfo)
         w.Write(data)
         writebar(data)
 
@@ -101,12 +113,16 @@ func main(){
 
     opt_scansave := flag.String("scansave", "", "Scan network range and save samples in scan/")
     opt_dumpraw := flag.String("dumpraw", "", "Dump traffic destinated to address")
+    opt_dumpone := flag.String("dumpone", "", "Dump one packet destinated to address")
     opt_dumprtp := flag.String("dumprtp", "", "Dump RTP traffic destinated to address")
     opt_dumpsds := flag.String("dumpsds", "", "Dump SDS traffic destinated to address")
     opt_dumpepg := flag.String("dumpepg", "", "Dump EPG traffic destinated to address")
+    opt_timeout := flag.Int("t", 1, "Set UDP read timeout in milliseconds")
     opt_port := flag.Int("port", 0, "Port")
 
     flag.Parse()
+
+    timeout = time.Duration(*opt_timeout) * 100000000
 
     if *opt_scansave != ""{
         scansave(*opt_scansave, *opt_port)
@@ -115,6 +131,11 @@ func main(){
     if *opt_dumpraw != ""{
         dumpraw(*opt_dumpraw, 0, os.Stdout)
         return
+    }
+
+    if *opt_dumpone != ""{
+        barenabled = false
+        dumpraw(*opt_dumpone, 1, os.Stdout)
     }
 
     if *opt_dumprtp != ""{

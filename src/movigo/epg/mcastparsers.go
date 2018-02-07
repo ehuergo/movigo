@@ -132,6 +132,10 @@ func (p *Program) String() string{
     return fmt.Sprintf("%s % 9s / %s / %d %d", p.Start, p.Duration, p.Title, p.Year, p.SerieId)
 }
 
+func (p *Program) End() time.Time{
+    return p.Start.Add(p.Duration)
+}
+
 func ParsePrograms(data []byte) []*Program{
     progs := make([]*Program, 0)
     off := 0
@@ -211,7 +215,7 @@ func ParseSerie(progtitle string, data []byte, off int) (Serie, int){
     serie.Year = Uint16(data[8:10])
     serie.Season = data[10]
     //serie.Title = decodetitle(data[12:title_end - off])
-    fmt.Printf("%s %+v %+v\n", progtitle, serie.ParsedSerie, serie)
+    //fmt.Printf("%s %+v %+v\n", progtitle, serie.ParsedSerie, serie)
     return serie, title_end
 }
 

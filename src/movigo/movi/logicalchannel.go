@@ -3,6 +3,7 @@ package movi
 import (
     "log"
     "fmt"
+    "time"
     "strings"
     "movigo/epg"
     "movigo/dvbstp"
@@ -64,6 +65,21 @@ func (c *LogicalChannel) GetLogoPath() (path string){
     path = strings.Replace(c.Name, " ", "", -1)
     path = strings.ToLower(path)
     return
+}
+
+func (c *LogicalChannel) EPGNow() *epg.Program{
+    now := time.Now()
+
+    if c.EPG == nil{
+        return nil
+    }
+
+    for _, program := range c.EPG.Programs{
+        if program.Start.Before(now) && program.End().After(now){
+            return program
+        }
+    }
+    return nil
 }
 
 /* StreamURL */
