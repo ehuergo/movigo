@@ -129,7 +129,19 @@ func (p *Program) UnmarshalJSON(data []byte) error{
 }
 
 func (p *Program) String() string{
-    return fmt.Sprintf("%s % 9s / %s / %d %d", p.Start, p.Duration, p.Title, p.Year, p.SerieId)
+    return fmt.Sprintf("%s % 9s - %s (%d)", p.Start, p.Duration, p.Title, p.Year)
+}
+
+func (p *Program) FilenameSerie() string{
+    if p.IsSerie && p.ParsedSerie != nil{
+        return fmt.Sprintf("%s S%02sE%02s - %s", p.ParsedName, p.ParsedSeason, p.ParsedEpisode, p.Title)
+    }else{
+        return fmt.Sprintf(p.Title)
+    }
+}
+
+func (p *Program) Filename() string{
+    return fmt.Sprintf("%s % 9s %s - (%d)", p.Start.Format("20060102 15:04, Mon"), p.Duration, p.Title, p.Year)
 }
 
 func (p *Program) End() time.Time{
@@ -140,9 +152,11 @@ func ParsePrograms(data []byte) []*Program{
     progs := make([]*Program, 0)
     off := 0
     //log.Println(data)
-    for off + 108 < len(data){
+    //for off + 108 < len(data){
     //for off > 31 && off + int(data[31]) + 33 < len(data){
+    for len(data[off:]) > 10{
         //log.Println(data[off:off+24])
+        //fmt.Println(data[off:off+10])
         prog := &Program{}
         prog.Pid = Uint32(data[off:off+4])
         prog.Start = time.Unix(int64(Uint32(data[off+4:off+8])), 0)

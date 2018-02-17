@@ -36,21 +36,24 @@ func ReadMulticastEPG(r io.Reader) *EPG{
     }
 
     filedata := make([]byte, 0)
-    for len(epg.Files) < 500{ // Force finish
+    for len(epg.Files) < 500{ // avoid looping forever
         data := make([]byte, 1500)
         n, _ := r.Read(data)
-        fmt.Printf("% 5d ", n)
+        //fmt.Printf("% 5d ", n)
+        fmt.Printf(".")
         chunk := ParseChunk(data[:n])
         filedata = append(filedata, chunk.Data...)
         if chunk.End{
             file := ParseFile(filedata)
             if file != nil && file.Size > 0 && len(file.Data) != 0{
-                fmt.Printf("FILE! %s: ", file.ServiceURL)
+                //fmt.Printf("FILE! %s: ", file.ServiceURL)
+                //fmt.Printf("%d", file.ServiceId)
                 _, ok := epg.Files[file.ServiceId]; if ok{
                     break
                 }
                 programs := ParsePrograms(file.Data)
-                fmt.Printf("%d programs\n ", len(programs))
+                //fmt.Printf("%d programs\n ", len(programs))
+                fmt.Printf("%d/%d ", file.ServiceId, len(programs))
                 epg.Files[file.ServiceId] = &EPGFile{file,programs}
             }
             filedata = make([]byte, 0)
