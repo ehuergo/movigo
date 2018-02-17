@@ -37,7 +37,7 @@ func dumpIPTVSimpleChannel(c *movi.LogicalChannel, prefix string) []byte{
         c.Name,
         c.GetLogoPath(),
         c.Number,
-        c.FromPackage,
+        "MovistarTV", // c.FromPackage,
         c.Name)
 
     url := fmt.Sprintf("%s%s\n", prefix, c.Url.Raw())
