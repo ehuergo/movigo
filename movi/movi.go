@@ -8,8 +8,8 @@ import (
     "sort"
     "time"
     "io/ioutil"
-    "movigo/dvbstp"
-    "movigo/epg"
+    "../dvbstp"
+    "../epg"
     //"golang.org/x/text/search"
     //"golang.org/x/text/language"
 )

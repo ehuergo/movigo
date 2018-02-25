@@ -4,7 +4,7 @@ import (
     "fmt"
     "log"
     "sort"
-    "movigo/movi"
+    "../movi"
 )
 
 func DumpGroupsAsIPTVSimple(groups map[int]*movi.ChannelGroup, prefix string) []byte{

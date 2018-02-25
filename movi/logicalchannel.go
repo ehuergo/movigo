@@ -5,8 +5,8 @@ import (
     "fmt"
     "time"
     "strings"
-    "movigo/epg"
-    "movigo/dvbstp"
+    "../epg"
+    "../dvbstp"
 )
 
 type ChannelGroup struct{

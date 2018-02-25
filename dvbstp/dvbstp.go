@@ -2,7 +2,7 @@ package dvbstp
 
 import (
     "log"
-    "movigo/dvbstp/sds"
+    "./sds"
     "io"
 )
 

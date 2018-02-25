@@ -1,7 +1,7 @@
 package output
 
 import (
-    "movigo/movi"
+    "../movi"
     "fmt"
     "encoding/xml"
 )

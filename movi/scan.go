@@ -8,8 +8,8 @@ import (
     "path/filepath"
     "encoding/xml"
     "time"
-    "movigo/dvbstp"
-    "movigo/epg"
+    "../dvbstp"
+    "../epg"
 )
 
 func (movi *Movi) getCacheAge() time.Time{
