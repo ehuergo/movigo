@@ -7,9 +7,9 @@ import (
     //"flag"
     "io"
     "os"
-    "movigo/readers"
-    "movigo/movi"
-    "movigo/output"
+    "./readers"
+    "./movi"
+    "./output"
     //"github.com/juanmasg/rtpx/rtpx"
     //"github.com/juanmasg/rtpx/rtpx/routers"
     "./rtpx"
@@ -170,7 +170,7 @@ func setupproxy(){
     log.Println("Proxy ready", opts.proxy)
 }
 
-func loop(){
+func loop_updates(){
 
     for{
         channels = m.GetChannelList(nil, ignorepkgs, true, 1000)
@@ -218,7 +218,7 @@ func main(){
             }
         }
         setupproxy()
-        loop() //update periodically
+        loop_updates()
         return
     }
 

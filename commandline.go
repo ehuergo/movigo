@@ -3,7 +3,7 @@ package main
 import (
     "flag"
     "net/url"
-    "movigo/movi"
+    "./movi"
 )
 
 type Opts struct{
