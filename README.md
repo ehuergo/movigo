@@ -8,5 +8,6 @@ Functionality implemented:
 * Generate XMLTV guide
 * List channels and packages
 * Search EPG content
+* Proxy RTP streams to HTTP
 
 Things might not always work in 'master'. Check tags for stable functionality
