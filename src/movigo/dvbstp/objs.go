@@ -224,5 +224,7 @@ type Service struct{
 type Package struct{
     PackageName         string              `xml:"PackageName"`
     Services            []*Service          `xml:"Service"`
+    HD                  int
+    SD                  int
 }
 
